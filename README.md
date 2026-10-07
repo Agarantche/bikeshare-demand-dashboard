@@ -3,11 +3,71 @@
 **Author:** Adam Garantche  
 **Date:** October 2, 2026  
 **Project Type:** Data Visualization Class Project  
-**Status:** Proposal
+**Status:** v1 – basic dashboard
 
 ## Project Overview
 
-This project will use historical Capital Bikeshare data to build a dashboard that visualizes bike rental demand by time, season, weather conditions, and user type. The dashboard will serve as a visual aid for identifying demand patterns and supporting decisions about bike availability, resource allocation, and maintenance scheduling.
+This project uses historical Capital Bikeshare data to build a dashboard that visualizes bike rental demand by time, season, weather conditions, and user type. The dashboard serves as a visual aid for identifying demand patterns and supporting decisions about bike availability, resource allocation, and maintenance scheduling.
+
+## Dashboard (v1)
+
+Built with **Python**, **pandas** and **Streamlit**.
+
+- **Summary numbers:** total rentals, average per day, busiest hour, share of registered users
+- **Daily rentals over time**
+- **Time & Season:** average rentals by hour and by season
+- **Weather:** temperature vs daily rentals, average rentals by weather type
+- **Working Day vs Weekend:** hourly pattern for working days, weekends and holidays
+- **Casual vs Registered:** hourly and day-type comparison of the two user groups
+- **Sidebar filters** for year, season, day type and weather, plus a table of the filtered data
+
+## Running the Dashboard
+
+1. Install Python 3.10 or newer.
+2. Install the libraries:
+   ```bash
+   pip install pandas streamlit
+   ```
+3. From the project folder, start the app:
+   ```bash
+   streamlit run BikeSharing.py
+   ```
+4. The dashboard opens in your browser at http://localhost:8501.
+
+Run the command from the project folder, because the app reads the CSV files using a path relative to it.
+
+## Project Files
+
+| File | Purpose |
+|---|---|
+| `BikeSharing.py` | The Streamlit dashboard |
+| `prep.py` | Loads and cleans the data (labels codes, converts units, adds a day-type column) |
+| `bike+sharing+dataset (1)/` | The dataset: `day.csv` and `hour.csv` |
+| `ProjectProposal.pdf` / `.docx` | The project proposal |
+
+## Data
+
+The [Bike Sharing Dataset](https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset) from the UCI Machine Learning Repository covers Capital Bikeshare rentals in Washington DC for 2011–2012.
+
+- `day.csv`: 731 rows, one per day
+- `hour.csv`: 17,379 rows, one per hour
+
+`prep.py` makes these changes before charting:
+
+- Replaces codes with labels (seasons, weather, years, weekdays)
+- Converts temperature, feels-like temperature, humidity and wind speed from the dataset's 0–1 scale back to real units
+- Adds a `day_type` column: Working day, Weekend or Holiday
+- Merges weather category 4 (heavy rain, only 3 hours in the data) into light rain/snow
+
+Note: the dataset labels season 1 as "Spring", but it covers roughly late December to March.
+
+**Citation:** Fanaee-T, Hadi, and Gama, Joao, "Event labeling combining ensemble detectors and background knowledge", *Progress in Artificial Intelligence* (2013): pp. 1-15, Springer Berlin Heidelberg, doi:10.1007/s13748-013-0040-3.
+
+## Planned Next Steps
+
+- More interactive charts, such as clicking a chart to filter the dashboard and drilling down into a single day or hour
+- More context for the numbers, such as comparisons and averages
+- A machine learning model that predicts expected demand from weather and day type
 
 ## Project Proposal
 

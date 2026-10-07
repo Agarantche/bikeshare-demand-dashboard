@@ -1,0 +1,7 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Not part of v1
+model.py
+
