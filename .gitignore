@@ -2,6 +2,5 @@
 __pycache__/
 *.pyc
 
-# Not part of v1
-model.py
-
+# Claude preview settings
+.claude/
