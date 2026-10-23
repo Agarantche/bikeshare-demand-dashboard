@@ -357,30 +357,6 @@ The work is split between Python and JavaScript:
 1. **Python does the analysis once.** `export_data.py` uses `prep.py` to clean the data and `model.py` to work out the expected rentals for every day, then saves the results as two small JSON files in `docs/data/`.
 2. **JavaScript draws the page.** `docs/index.html` loads those files, and the code in `docs/js/` does all the filtering, clicking and charts in the browser, so the page responds instantly and needs no server.
 
-If the data, `prep.py` or `model.py` change, run `export_data.py` again to refresh the JSON files:
-
-```bash
-pip install pandas scikit-learn
-python export_data.py
-```
-
-### Publishing on GitHub Pages
-
-1. Push the project to GitHub.
-2. In the repository, go to **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**, pick the `main` branch and the **`/docs`** folder, and click **Save**.
-4. After a minute the dashboard is live at https://agarantche.github.io/bikeshare-demand-dashboard/
-
-### Running It on Your Own Computer
-
-Browsers block a page opened straight from your files from loading its data files, so use a small local web server instead:
-
-```bash
-python -m http.server 8000 -d docs
-```
-
-Then open http://localhost:8000.
-
 ### What's on the Page
 
 Built with HTML, CSS, JavaScript and Vega-Lite, in the Poppins font with a charcoal and red color scheme and a dark mode.
