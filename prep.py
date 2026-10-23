@@ -6,7 +6,7 @@ DATA_DIR = "bike+sharing+dataset (1)/"
 #the dataset readme says 1=spring ... 4=winter but the dates show each code is one season earlier
 #(code 1 is dec 21 - mar 20) so these labels go by the actual dates
 SEASONS = {1: "Winter", 2: "Spring", 3: "Summer", 4: "Fall"}
-WEATHER = {1: "Clear", 2: "Mist/Cloudy", 3: "Light Rain/Snow", 4: "Light Rain/Snow"}  #4 is heavy rain, only 3 hours of it so its merged into 3
+WEATHER = {1: "Clear", 2: "Mist/cloudy", 3: "Rain/snow", 4: "Rain/snow"}  #4 is heavy rain, only 3 hours of it so its merged into 3
 WEEKDAYS = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
 
 

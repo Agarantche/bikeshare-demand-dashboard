@@ -1,7 +1,12 @@
 #ml model that predicts how many rentals a day should get from its weather, date and day type
 #run python model.py to see how accurate it is
+import hashlib
+from pathlib import Path
+
+import joblib  #comes with scikit-learn, used to save the trained model to a file
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import KFold, cross_val_predict
@@ -13,13 +18,13 @@ NUMERIC = ["year", "mnth", "workingday", "holiday", "temp_c", "humidity", "wind"
 #text columns the model uses, these get turned into 0/1 columns
 CATEGORIES = {
     "weekday": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    "weather": ["Clear", "Mist/Cloudy", "Light Rain/Snow"],
+    "weather": ["Clear", "Mist/cloudy", "Rain/snow"],
 }
 
 #real events behind the biggest gaps between actual and expected rentals
 EVENTS = {
-    "2011-01-26": "Snowstorm (\"Commutageddon\")",
-    "2011-01-27": "Snowstorm aftermath",
+    "2011-01-26": "Snowstorm",
+    "2011-01-27": "Snowstorm",
     "2011-08-27": "Hurricane Irene",
     "2011-08-28": "Hurricane Irene",
     "2012-10-29": "Hurricane Sandy",
@@ -33,7 +38,7 @@ def event_for(date):
     if date.strftime("%Y-%m-%d") in EVENTS:
         return EVENTS[date.strftime("%Y-%m-%d")]
     if date.month == 12 and date.day >= 24:
-        return "Christmas holiday week"
+        return "Christmas week"
     return ""
 
 
@@ -78,6 +83,41 @@ def fit_models(day):
 def predict(models, inputs):
     X = make_features(pd.DataFrame([inputs]))
     return {target: max(0.0, float(model.predict(X)[0])) for target, model in models.items()}
+
+
+#---------- saving the trained model so the dashboard starts fast ----------
+#training takes 10+ seconds, so the results get saved in the model_cache folder the first time
+#and loaded from there after that. if the data, this file or scikit-learn changes, it trains again
+CACHE_DIR = Path(__file__).parent / "model_cache"
+
+
+#a short code that changes whenever the data or the model code changes
+def fingerprint(day):
+    h = hashlib.sha256()
+    h.update(pd.util.hash_pandas_object(day[NUMERIC + list(CATEGORIES) + TARGETS], index=False).values.tobytes())
+    h.update(Path(__file__).read_bytes())  #this file, so changing the model retrains it
+    h.update(sklearn.__version__.encode())  #saved models only work with the same scikit-learn version
+    return h.hexdigest()[:16]
+
+
+#gives back (day with the expected columns, planner models), from the cache if it can
+def load_or_train(day):
+    key = fingerprint(day)
+    path = CACHE_DIR / f"model_{key}.joblib"
+    if path.exists():
+        try:
+            expected, models = joblib.load(path)
+            return day.join(expected), models
+        except Exception:
+            pass  #broken or old file, just train again
+    with_expected = add_expected(day)
+    models = fit_models(with_expected)
+    CACHE_DIR.mkdir(exist_ok=True)
+    for old in CACHE_DIR.glob("model_*.joblib"):
+        old.unlink()  #only keep the newest saved model
+    expected = with_expected[[f"expected_{t}" for t in TARGETS] + ["event"]]
+    joblib.dump((expected, models), path)
+    return with_expected, models
 
 
 #only runs with python model.py, prints how accurate the model is

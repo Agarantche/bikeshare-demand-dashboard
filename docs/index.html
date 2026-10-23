@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- bike sharing demand dashboard, the website version that runs on github pages -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bike-share demand</title>
+  <meta name="description" content="Interactive dashboard of Capital Bikeshare rental demand, 2011–2012, by Adam Garantche">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚲</text></svg>">
+  <!-- poppins font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- picks light or dark mode before the page shows, so it doesnt flash white -->
+  <script>
+    try {
+      const saved = localStorage.getItem("bk-theme");
+      document.documentElement.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    } catch (e) {
+      document.documentElement.dataset.theme = "light";
+    }
+  </script>
+  <!-- vega-lite draws the charts (the same chart system altair used in the python version) -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header id="head"></header>
+    <div id="filters" class="filters"></div>
+    <div id="page"><p class="loading">Loading the data…</p></div>
+  </main>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

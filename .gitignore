@@ -4,3 +4,6 @@ __pycache__/
 
 # Claude preview settings
 .claude/
+
+# Saved demand model (rebuilt automatically on first run)
+model_cache/
