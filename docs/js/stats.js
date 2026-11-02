@@ -24,6 +24,22 @@ export function corr(xs, ys) {
   return sxy / Math.sqrt(sxx * syy);
 }
 
+//splits numbers into n groups of equal width like R's cut(x, n), gives each value's group (0 to n-1) and the edges
+export function cut(values, n) {
+  const min = Math.min(...values), max = Math.max(...values), w = (max - min) / n || 1;
+  const edges = Array.from({ length: n + 1 }, (_, i) => min + w * i);
+  return { groups: values.map((x) => Math.min(n - 1, Math.floor((x - min) / w))), edges };
+}
+
+//smoothed density curve (kernel density) of values at each point in grid, like geom_density
+//the bandwidth uses silverman's rule of thumb
+export function kde(values, grid) {
+  const n = values.length, m = values.reduce((a, b) => a + b, 0) / n;
+  const sd = Math.sqrt(values.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1)) || 1;
+  const h = 1.06 * sd * n ** -0.2;
+  return grid.map((y) => values.reduce((s, x) => s + Math.exp(-0.5 * ((y - x) / h) ** 2), 0) / (n * h * Math.sqrt(2 * Math.PI)));
+}
+
 //counts values into bins, gives [{lo, hi, n}] for a histogram
 //log=true makes the bins even on a log scale, rounded to whole numbers since rentals are whole numbers
 export function histogram(values, bins, log = false) {

@@ -1,5 +1,5 @@
 //the fixed choices and limits used all over the dashboard (same as dashboard/settings.py)
-export const YEARS = [2011, 2012];
+const YEARS = [2011, 2012];
 export const SEASONS = ["Winter", "Spring", "Summer", "Fall"];
 export const DAY_TYPES = ["Working day", "Weekend", "Holiday"];
 export const WEATHERS = ["Clear", "Mist/cloudy", "Rain/snow"];

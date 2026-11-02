@@ -11,7 +11,7 @@ OUT = Path(__file__).parent / "docs" / "data"
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    day, _ = load_or_train(load_day())  #daily data plus the expected rentals (from model_cache if it was trained before)
+    day = load_or_train(load_day())  #daily data plus the expected rentals (from model_cache if it was trained before)
     day["date"] = day["dteday"].dt.strftime("%Y-%m-%d")
 
     #one row per day with everything the website needs, numbers rounded so the file stays small

@@ -1,12 +1,14 @@
-//starts the dashboard: loads the data, then draws the page and redraws it whenever something changes
+//starts the dashboard: loads the data, then draws the open part of the page and redraws it whenever something changes
 //the code is split up like the python version:
 //  settings.js  the filter choices and limits        theme.js   colors for light and dark mode
 //  data.js      loads the data, numbers for filters  state.js   what the page remembers and what clicks do
 //  charts.js    chart helpers (vega-lite)            format.js  number formatting and small html helpers
 //  stats.js     percentiles, skewness, correlation   sections/  one file per part of the page
 import { build, load } from "./data.js";
-import { onChange, ui } from "./state.js";
+import { onChange, readHash, set, state, ui } from "./state.js";
 import { refresh } from "./theme.js";
+import * as nav from "./sections/nav.js";
+import * as home from "./sections/home.js";
 import * as overview from "./sections/overview.js";
 import * as daily from "./sections/daily.js";
 import * as when from "./sections/when.js";
@@ -15,31 +17,36 @@ import * as riders from "./sections/riders.js";
 import * as eda from "./sections/eda.js";
 import * as footer from "./sections/footer.js";
 
-const $ = (id) => document.getElementById(id);
-let drawing = false, again = false;
+//what each part of the page shows, top to bottom (only the open part gets drawn)
+const VIEWS = {
+  home: [home], overview: [overview, daily], when: [when], disrupt: [disrupt], riders: [riders], analysis: [eda], data: [footer],
+};
 
-//draws the whole page for the current filters
+const $ = (id) => document.getElementById(id);
+let drawing = false, again = false, lastView = null;
+
+//draws the open part of the page for the current filters
 async function render() {
   if (drawing) { again = true; return; } //a click came in while drawing, draw once more after
   drawing = true;
   refresh(); //light or dark colors
   const v = build(); //filtered days and everything the sections need
   const page = $("page");
-  const scrollY = window.scrollY;
-  page.style.minHeight = page.offsetHeight + "px"; //keeps the page tall while it redraws so it doesnt jump
+  const newView = state.view !== lastView;
+  const scrollY = newView ? 0 : window.scrollY; //a new part starts at the top
+  page.style.minHeight = newView ? "" : page.offsetHeight + "px"; //keeps the page tall while it redraws so it doesnt jump
+  lastView = state.view;
 
-  overview.renderHead(v, $("head"));
-  overview.renderFilters(v, $("filters"), render);
-  //one box per part of the page, in order from top to bottom
-  page.innerHTML = overview.overviewHtml(v) +
-    (v.d.length ? `<div id="p-daily"></div><div id="p-when"></div><div id="p-disrupt"></div><div id="p-riders"></div><div id="p-eda"></div>` : "") +
-    `<div id="p-footer"></div>`;
-  const jobs = [];
-  if (v.d.length) {
-    jobs.push(daily.render(v, $("p-daily")), when.render(v, $("p-when")), disrupt.render(v, $("p-disrupt")),
-      riders.render(v, $("p-riders")), eda.render(v, $("p-eda")));
-  }
-  jobs.push(footer.render(v, $("p-footer")));
+  nav.render(v, $("side"), render);
+  $("filters").hidden = state.view === "home"; //the home page always shows everything
+  if (state.view !== "home") overview.renderFilters(v, $("filters"));
+  //the overview shows its own message when no days match, the other parts just show nothing
+  const parts = state.view === "overview" || state.view === "home" || v.d.length ? VIEWS[state.view] : [];
+  if (newView) { page.classList.remove("fade"); void page.offsetWidth; page.classList.add("fade"); } //a quick fade in when a new part opens
+  page.innerHTML = parts.map((_, i) => `<div id="p-${i}"></div>`).join("") +
+    (parts.length ? "" : `<div class="warn">No days match these filters. Change one of them or click <b>Reset</b>.</div>`);
+  $("foot").innerHTML = footer.footerHtml();
+  const jobs = parts.map((p, i) => p.render(v, $("p-" + i)));
   window.scrollTo(0, scrollY);
   try { await Promise.all(jobs); } catch (e) { console.error(e); }
 
@@ -55,10 +62,14 @@ async function start() {
     await load();
   } catch (e) {
     $("page").innerHTML = `<div class="warn">Couldn't load the data. If you opened index.html straight from your files, start a small
-      web server instead (see the README), because browsers block loading data files that way.</div>`;
+      web server instead, because browsers block loading data files that way.</div>`;
     return;
   }
+  Object.assign(state, readHash()); //opens the part in the address, like #when
   onChange(render);
+  window.addEventListener("popstate", () => set(readHash())); //back and forward buttons
+  //the filter bar gets a soft shadow once the page scrolls under it
+  window.addEventListener("scroll", () => $("filters").classList.toggle("stuck", window.scrollY > 4), { passive: true });
   render();
 }
 

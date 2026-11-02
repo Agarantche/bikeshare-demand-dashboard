@@ -1,14 +1,17 @@
 //colors for the charts in light and dark mode (the page colors are in css/style.css)
-//the names are kept from the python version: BLUE is the main chart color (charcoal now),
-//ORANGE is the highlight color (red now), AQUA marks good days, YELLOW is a 4th category color
+//the names are kept from the python version: BLUE is the main chart color (steel blue in light mode, light blue in dark),
+//ORANGE is the highlight color (coral), AQUA marks good days (green), YELLOW is a 4th category color (a deeper coral)
+//RAMP is for ordered categories from light to strong (clear -> rain, low -> high demand), ON_ACC is text on coral
 const PALETTE = {
   light: {
-    BLUE: "#2b2b2b", ORANGE: "#d1342f", AQUA: "#6c757d", YELLOW: "#c97a76", GRAY: "#c4c4c4",
-    FG: "#1a1a1a", MUTED: "#6b6b6b", PANEL: "#ffffff", LINE: "#e4e4e4", HEAD: "#111111", REF: "#a6a6a6",
+    BLUE: "#3d5a80", ORANGE: "#ee6c4d", AQUA: "#3a9b7a", YELLOW: "#d4573a", GRAY: "#7d8999",
+    RAMP: ["#98c1d9", "#3d5a80", "#ee6c4d"], ON_ACC: "#1b2230",
+    FG: "#293241", MUTED: "#55606f", PANEL: "#ffffff", LINE: "#d7e3e8", HEAD: "#1b2230", REF: "#9aa7b5",
   },
   dark: {
-    BLUE: "#c9ccd1", ORANGE: "#ef4b45", AQUA: "#9aa1a8", YELLOW: "#e08a86", GRAY: "#5c5c5c",
-    FG: "#ececec", MUTED: "#9e9e9e", PANEL: "#1c1c1c", LINE: "#2e2e2e", HEAD: "#f5f5f5", REF: "#5a5a5a",
+    BLUE: "#98c1d9", ORANGE: "#ee6c4d", AQUA: "#7fd1ae", YELLOW: "#f59a82", GRAY: "#7f8ca0",
+    RAMP: ["#6b8bb3", "#98c1d9", "#ee6c4d"], ON_ACC: "#1b2230",
+    FG: "#e0fbfc", MUTED: "#a9b8c6", PANEL: "#293241", LINE: "#3a465a", HEAD: "#f4feff", REF: "#56637a",
   },
 };
 
@@ -27,7 +30,10 @@ export function refresh() {
 //dark mode button: switches the mode and remembers it in the browser for next time
 export function toggleMode() {
   const next = mode() === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
+  const root = document.documentElement;
+  root.classList.add("theme-anim"); //fades the page colors over instead of snapping (see .theme-anim in style.css)
+  setTimeout(() => root.classList.remove("theme-anim"), 400);
+  root.dataset.theme = next;
   try { localStorage.setItem("bk-theme", next); } catch (e) { /* private window, just dont remember it */ }
   refresh();
 }

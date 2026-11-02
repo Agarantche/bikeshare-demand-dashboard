@@ -9,11 +9,11 @@ export function render(v, el) {
   el.innerHTML = section(2, "What disrupts it?", "sec-disrupt",
     "A short list of storms and holiday days makes up most of the shortfall against expected. " +
     "How weather and temperature affect a normal day is covered in Section 4.") +
-    `<div class="card">${head("Disrupted days", "Days more than 50% below expected, worst first. Click a row to open that day above.")}
+    `<div class="card">${head("Disrupted days", "Days more than 50% below expected, worst first. Click a row to open that day in the Overview.")}
       ${worst.length ? `<div class="tbl-wrap"><table class="tbl click"><thead><tr><th>Date</th><th>Event</th><th>Weather</th>
         <th class="num">Rentals</th><th class="num">Expected</th><th class="num">vs expected</th></tr></thead><tbody>${rows}</tbody></table></div>`
         : `<p class="note">No disrupted days match the current filters.</p>`}</div>`;
   el.querySelectorAll("tr[data-day]").forEach((tr) => tr.addEventListener("click", () =>
-    openDay(tr.dataset.day, true, "Opened in the daily chart at the top of the page")));
+    openDay(tr.dataset.day, true, "Opened in the daily chart in the Overview")));
   return Promise.resolve();
 }

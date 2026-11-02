@@ -2,8 +2,5 @@
 __pycache__/
 *.pyc
 
-# Claude preview settings
-.claude/
-
-# Saved demand model (rebuilt automatically on first run)
+# Saved model results (rebuilt automatically on first run)
 model_cache/

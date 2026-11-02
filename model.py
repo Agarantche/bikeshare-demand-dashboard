@@ -73,20 +73,8 @@ def add_expected(day):
     return day
 
 
-#trains one model per target on every day, used by the demand planner
-def fit_models(day):
-    X = make_features(day)
-    return {target: new_model().fit(X, day[target]) for target in TARGETS}
-
-
-#predicts rentals for one made up day (inputs is a dict with the same columns as the data)
-def predict(models, inputs):
-    X = make_features(pd.DataFrame([inputs]))
-    return {target: max(0.0, float(model.predict(X)[0])) for target, model in models.items()}
-
-
-#---------- saving the trained model so the dashboard starts fast ----------
-#training takes 10+ seconds, so the results get saved in the model_cache folder the first time
+#---------- saving the results so running it again is fast ----------
+#training takes 10+ seconds, so the expected rentals get saved in the model_cache folder the first time
 #and loaded from there after that. if the data, this file or scikit-learn changes, it trains again
 CACHE_DIR = Path(__file__).parent / "model_cache"
 
@@ -100,24 +88,21 @@ def fingerprint(day):
     return h.hexdigest()[:16]
 
 
-#gives back (day with the expected columns, planner models), from the cache if it can
+#gives back the day table with the expected columns added, from the cache if it can
 def load_or_train(day):
     key = fingerprint(day)
-    path = CACHE_DIR / f"model_{key}.joblib"
+    path = CACHE_DIR / f"expected_{key}.joblib"
     if path.exists():
         try:
-            expected, models = joblib.load(path)
-            return day.join(expected), models
+            return day.join(joblib.load(path))
         except Exception:
             pass  #broken or old file, just train again
     with_expected = add_expected(day)
-    models = fit_models(with_expected)
     CACHE_DIR.mkdir(exist_ok=True)
-    for old in CACHE_DIR.glob("model_*.joblib"):
-        old.unlink()  #only keep the newest saved model
-    expected = with_expected[[f"expected_{t}" for t in TARGETS] + ["event"]]
-    joblib.dump((expected, models), path)
-    return with_expected, models
+    for old in CACHE_DIR.glob("*.joblib"):
+        old.unlink()  #only keep the newest saved results
+    joblib.dump(with_expected[[f"expected_{t}" for t in TARGETS] + ["event"]], path)
+    return with_expected
 
 
 #only runs with python model.py, prints how accurate the model is

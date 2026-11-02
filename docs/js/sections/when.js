@@ -6,6 +6,9 @@ import { DAY_TYPES, FILTERS, WEEKDAY_NAMES, WEEKDAYS } from "../settings.js";
 import { match, openDay, openSlot, set, state, toggle } from "../state.js";
 import { C } from "../theme.js";
 
+//the time slot that was open last time, so its details only slide in when a different slot opens
+let shown = null;
+
 export function render(v, el) {
   el.innerHTML = section(1, "When is demand high?", "sec-when",
     "Commuting shapes the week: working days spike at the morning and evening rush, weekends build to one broad " +
@@ -20,7 +23,10 @@ export function render(v, el) {
 
   const slotEl = el.querySelector("#slot");
   if (state.slot) renderSlot(v, slotEl);
-  else slotEl.innerHTML = `<div class="hint">Try the strongest cells around 8:00 and 17:00 on weekdays, or the empty early-morning hours.</div>`;
+  else {
+    shown = null;
+    slotEl.innerHTML = `<div class="hint">Try the strongest cells around 8:00 and 17:00 on weekdays, or the empty early-morning hours.</div>`;
+  }
 
   return Promise.all([
     draw(el.querySelector("#heat"), heatSpec(v), (d) => d.weekday && openSlot(d.weekday, d.hr)),
@@ -99,12 +105,14 @@ function renderSlot(v, el) {
         <div><p class="note">Same slot by weather (rentals per hour)</p>${barList(weatherRows, mx, "weather")}</div>
       </div>${extremes}`;
   }
-  el.innerHTML = `<div class="detail"><div class="detail-h"><span class="h4">${WEEKDAY_NAMES[wd]}, ${h}:00–${h + 1}:00</span>
+  const fresh = shown !== `${wd} ${h}`;
+  shown = `${wd} ${h}`;
+  el.innerHTML = `<div class="detail${fresh ? " enter" : ""}"><div class="detail-h"><span class="h4">${WEEKDAY_NAMES[wd]}, ${h}:00–${h + 1}:00</span>
     <span class="spacer"></span><button class="btn" id="slot-close">Close ×</button></div>${body}</div>`;
   el.querySelector("#slot-close").addEventListener("click", () => set({ slot: null }));
   el.querySelectorAll("button.hb").forEach((b) => b.addEventListener("click", () => toggle(b.dataset.k, b.dataset.v)));
   el.querySelectorAll("[data-day]").forEach((b) => b.addEventListener("click", () =>
-    openDay(b.dataset.day, true, "Opened in the daily chart at the top of the page")));
+    openDay(b.dataset.day, true, "Opened in the daily chart in the Overview")));
 }
 
 //average hourly rentals for each day type (skips the day type filter so all 3 lines stay on the chart)

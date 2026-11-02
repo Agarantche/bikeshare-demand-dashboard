@@ -9,6 +9,9 @@ import { C } from "../theme.js";
 //date text at noon so the browser never shifts it to the day before because of time zones
 const noon = (date) => date + "T12:00:00";
 
+//the day that was open last time, so the details only slide in when a different day opens (not on every redraw)
+let shown = null;
+
 export function render(v, el) {
   const anyFilter = v.anyFilter;
   el.innerHTML = `<div class="card" id="daily">
@@ -21,6 +24,7 @@ export function render(v, el) {
   const chartEl = el.querySelector("#daily-chart");
   const jobs = [draw(chartEl, dailySpec(v, chartEl.clientWidth), (d) => d.date && openDay(d.date))];
   if (state.openDay) jobs.push(renderDay(v, el.querySelector("#day-detail")));
+  else shown = null;
   return Promise.all(jobs);
 }
 
@@ -146,7 +150,9 @@ function renderDay(v, el) {
   const gapColor = allGap < -0.15 ? "var(--bad)" : allGap > 0.15 ? "var(--ok)" : "var(--fg)";
   const riderWord = state.rider === "all" ? "all" : RIDERS[state.rider].toLowerCase();
 
-  el.innerHTML = `<div class="detail">
+  const fresh = shown !== o.date;
+  shown = o.date;
+  el.innerHTML = `<div class="detail${fresh ? " enter" : ""}">
     <div class="detail-h"><span class="h4">${fdate(o.date, true)}</span>${o.event ? `<span class="pill">${esc(o.event)}</span>` : ""}
       <span class="note" style="margin:0">${o.day_type} · ${o.season}</span><span class="spacer"></span>
       <button class="btn" id="dd-prev" ${i === 0 ? "disabled" : ""}>‹ Prev</button>

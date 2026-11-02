@@ -42,22 +42,22 @@ export function head(title, note, id) {
   return `<div class="h3"${id ? ` id="${id}"` : ""}>${title}</div>${note ? `<p class="note">${note}</p>` : ""}`;
 }
 
-//numbered section heading with a line above it and a back to top link
+//heading at the top of each part of the page, num is the section number (or a small label like "Overview")
 export function section(num, title, id, text) {
-  return `<div class="sec" id="${id}"><span class="sec-n">${num}</span>
-    <div><div class="sec-k">Section ${num} of 4</div><div class="sec-h">${title}</div></div>
-    <a class="sec-top" href="#top">↑ Back to top</a></div><p class="sec-p">${text}</p>`;
+  const numbered = typeof num === "number";
+  return `<div class="sec" id="${id}">${numbered ? `<span class="sec-n">${num}</span>` : ""}
+    <div><div class="sec-k">${numbered ? `Section ${num} of 4` : num}</div><h1 class="sec-h">${title}</h1></div></div>
+    ${text ? `<p class="sec-p">${text}</p>` : ""}`;
 }
 
 //report style table like the sample report, with "Table N." above it
+//columns where every cell is a number (like 4,504 or 63.3% or −0.05) line up on the right
 export function table(columns, rows, caption) {
-  return `<p class="cap">${caption}</p><table class="tbl"><thead><tr>${columns.map((c) => `<th>${c}</th>`).join("")}</tr></thead>
-    <tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-}
-
-//"Figure N." caption under a chart, plus the paragraph that explains it
-export function figureNote(caption, text) {
-  return `<p class="cap">${caption}</p><p class="interp">${text}</p>`;
+  const isNum = (v) => /^[−+-]?[\d,.]+%?$/.test(String(v).replace(/<[^>]*>/g, "").trim()) || String(v).trim() === "—";
+  const num = columns.map((_, j) => rows.length > 0 && rows.every((r) => isNum(r[j])) && !rows.every((r) => String(r[j]).trim() === "—"));
+  const cls = (j) => (num[j] ? ` class="num"` : "");
+  return `<p class="cap">${caption}</p><table class="tbl"><thead><tr>${columns.map((c, j) => `<th${cls(j)}>${c}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((r) => `<tr>${r.map((v, j) => `<td${cls(j)}>${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
 //bar list rows: label on the left, bar in the middle, number and note on the right

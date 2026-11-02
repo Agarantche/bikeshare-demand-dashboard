@@ -14,7 +14,7 @@
 
 This project investigates how bike rental demand changes with time of day, season, weather, temperature, type of day and rider type. The analysis uses the Capital Bikeshare **Bike Sharing Dataset** from the UCI Machine Learning Repository: 731 days and 17,379 hours of rentals in Washington, D.C., from 2011 to 2012. The business purpose is to help a bike-share operator plan bike availability, staffing and maintenance around when and why demand rises and falls.
 
-Exploratory data analysis was done with summary statistics and graphs, and the results are presented in an interactive dashboard website that anyone can open in a browser. Daily rentals are spread fairly evenly (mean 4,504, median 4,548), while hourly rentals are strongly right-skewed, so a log scale was used to show quiet and busy hours together. Demand follows a clear commuter rhythm on working days, with peaks at 8:00 and 17:00, and one broad midday peak on weekends. Rentals rise strongly with temperature (r = +0.63), fall by 63% on rain or snow days compared with clear days, and grew 64% from 2011 to 2012.
+Exploratory data analysis was done with summary statistics and graphs, applying the methods of course Labs 2–9, and the results are presented in an interactive dashboard website that anyone can open in a browser. Daily rentals are spread fairly evenly (mean 4,504, median 4,548), while hourly rentals are strongly right-skewed, so a log scale was used to show quiet and busy hours together. Demand follows a clear commuter rhythm on working days, with peaks at 8:00 and 17:00, and one broad midday peak on weekends. Rentals rise with temperature (a moderate positive correlation, r = +0.63), fall by 63% on rain or snow days compared with clear days, and grew 64% from 2011 to 2012.
 
 At first, the season looks like the main driver of demand: Winter averages 2,604 rentals a day, compared with 5,644 in Summer. Further analysis showed that the seasons have very different temperatures, and that warmer days are busier within every season, so much of the seasonal gap comes from temperature. A machine learning model was added to estimate the expected rentals for each day, which makes unusual days stand out, such as Hurricane Sandy (−99%) and Christmas week. The main recommendations are to schedule maintenance in the 3:00–6:00 window and in January, to have bikes in place before the 8:00 and 17:00 peaks, to plan around rain forecasts, and to size the fleet for peak months rather than the average.
 
@@ -137,70 +137,159 @@ The 165 missing hours do not indicate an error. They are hours with no rentals r
 
 ## 5 Exploratory Data Analysis
 
-Every figure below is in the dashboard's **Section 4: Exploratory data analysis**, where it updates with the filters and rider type.
+Every table and figure below is in the dashboard's **Section 4: Exploratory data analysis**, where it updates with the filters, the rider type and the buttons above each chart. Each part is one task from the analysis plan (`AnalysisPlan.docx`) and uses the methods of one course lab, applied to the bike data:
 
-### 5.1 Understanding the Dataset
-
-The data has 731 days and 17,379 hours. The primary response variable is the number of rentals (`cnt`), which is also split into `registered` and `casual`. The main explanatory variables are time (hour, weekday, season), weather, temperature, and type of day.
-
-### 5.2 Distribution of Rentals
-
-*Table 4. Summary statistics for rentals.*
-
-| Rentals | Minimum | First quartile | Median | Mean | Third quartile | Maximum |
-|---|---|---|---|---|---|---|
-| Per day | 22 | 3,152 | 4,548 | 4,504.3 | 5,956 | 8,714 |
-| Per hour | 1 | 40 | 142 | 189.5 | 281 | 977 |
-
-Daily rentals are spread fairly evenly: the mean and median are close (skewness −0.05), and the very low days are mostly storms and holidays (**Figure 1**). Hourly rentals are strongly right-skewed (skewness 1.28): most hours are quiet and a few rush hours are very busy, so the mean is well above the median (**Figure 2**). On a log scale, two groups appear: overnight hours with only a few rentals and daytime hours with hundreds (**Figure 3**). The original counts are still used for everything reported in rentals.
-
-### 5.3 Distribution of Weather and Season
-
-*Table 5. Frequency of weather and season (days).*
-
-| Variable | Category | Days | Percentage |
+| Part | Plan task | Lab | Methods used |
 |---|---|---|---|
-| Weather | Clear | 463 | 63.3 |
-| Weather | Mist/cloudy | 247 | 33.8 |
-| Weather | Rain/snow | 21 | 2.9 |
-| Season | Winter | 181 | 24.8 |
-| Season | Spring | 184 | 25.2 |
-| Season | Summer | 188 | 25.7 |
-| Season | Fall | 178 | 24.4 |
+| 5.1 | Task 1 | Lab 2 | Statistical type vs stored type, factors, ordered levels |
+| 5.2 | Task 2 | Lab 3 | Summary, histogram (15, 30 or 60 bins), density curve, boxplot, zoom, log scale |
+| 5.3 | Task 3 | Lab 4 | Frequency and relative frequency, bar charts in natural or frequency order |
+| 5.4 | Task 4 | Lab 5 | Scatterplot with transparency, smooth or straight trend line, log scale |
+| 5.5 | Task 5 | Lab 6 | Grouped summaries, boxplot, violin, jittered points, bar of means, a confounder |
+| 5.6 | Task 6 | Lab 7 | Two-way table, row and column percentages, grouped/stacked/100% bars, heatmap |
+| 5.7 | Task 7 | Lab 8 | `cut(temp_c, 5)` vs demand level, count and proportional bars |
+| 5.8 | Task 8 | Lab 9 | Correlation matrix, correlation within each season, limits of r |
 
-About 63% of days are clear and only 21 are rain or snow days, so averages for rain/snow rest on few days. The seasons are close to equal in size. Because weather and season are categories, a log transformation does not apply to them.
+Tasks 9 and 10 of the plan (rentals by hour and day type, and casual vs registered riders) are dashboard Sections 1 and 3.
 
-### 5.4 Relationship Between Rentals and Temperature
+### 5.1 Understanding the Dataset and Variable Types
 
-*Table 6. Pearson correlations with daily rentals.*
+The data has 731 days and 17,379 hours. The primary response variable is the number of rentals (`cnt`), which is also split into `registered` and `casual`. Several categories are stored as numbers in the file (season 1–4, weather 1–4), so they were turned into labelled categories before anything else; otherwise a program would happily report an "average season". The type decides the summary: numbers get quartiles and a mean (5.2), categories get counts (5.3).
 
-| Measure | Value |
-|---|---|
-| Temperature (°C) | +0.627 |
-| Feels-like temperature (°C) | +0.631 |
-| Humidity (%) | −0.101 |
-| Wind speed (km/h) | −0.235 |
+*Table 4. Variable types, how the file stores them, and their levels.*
 
-Rentals have a strong positive association with temperature: warmer days are generally busier (**Figure 4**). The trend is not a straight line; it flattens and dips on the hottest days. Humidity and wind have weaker, negative associations. Days at the same temperature still vary, because season, weather, type of day and the 2011 to 2012 growth also matter.
+| Variable | Statistical type | Stored in the file as | Levels or unit |
+|---|---|---|---|
+| `season` | Categorical, ordered by the calendar | Number 1–4 | Winter < Spring < Summer < Fall |
+| `weather` (`weathersit`) | Categorical, ordered by how bad it is | Number 1–4 | Clear < Mist/cloudy < Rain/snow |
+| `weekday` | Categorical, ordered | Number 0–6 (0 = Sunday) | Mon < Tue < … < Sun |
+| `day_type` (made here) | Categorical, not ordered | Made from `holiday` and `workingday` | Working day, Weekend, Holiday |
+| `year` | Categorical (2 levels) | Number 0–1 | 2011, 2012 |
+| `hr` | Numerical, discrete | Number 0–23 | Hour of the day |
+| `temp_c`, `feels_like_c` | Numerical, continuous | Scaled 0–1 (× 41 and × 50) | °C |
+| `humidity`, `wind` | Numerical, continuous | Scaled 0–1 (× 100 and × 67) | %, km/h |
+| `cnt`, `registered`, `casual` | Numerical, discrete counts | Whole number | Rentals |
+| `demand` (made here) | Categorical, ordered | Rentals cut into thirds | Low < Medium < High |
+| `temp_group` (made here) | Categorical, ordered | `cut(temp_c, 5)` | 5 equal-width ranges |
 
-### 5.5 Rentals by Season and Weather
+The order of the levels matters: weather has a real order from good to bad, but day type does not, since a weekend is not "more" than a holiday.
 
-*Table 7. Rentals and temperature by season.*
+### 5.2 One Numerical Variable: Rentals
 
-| Season | Days | Median rentals | Mean rentals | Median temperature (°C) |
+*Table 5. Summary statistics for rentals.*
+
+| Rentals | Minimum | First quartile | Median | Mean | Third quartile | Maximum | Skewness |
+|---|---|---|---|---|---|---|---|
+| Per day | 22 | 3,152 | 4,548 | 4,504.3 | 5,956 | 8,714 | −0.05 |
+| Per hour | 1 | 40 | 142 | 189.5 | 281 | 977 | 1.28 |
+
+Following Lab 3, each distribution is described by its shape, center, spread and unusual values.
+
+- **Daily rentals** are fairly symmetric (**Figure 1**). The mean (4,504) and median (4,548) are close, the middle half of days falls between 3,152 and 5,956 (IQR 2,804), and no days are past the boxplot whiskers (**Figure 3**). The very low days are storms and holidays.
+- **Hourly rentals** are strongly right-skewed. Most hours are quiet and a few rush hours are very busy, so the mean (189) is well above the median (142), and 505 hours are boxplot outliers. A log scale spreads out the quiet hours and shows two groups: overnight hours with a few rentals and daytime hours with hundreds.
+
+The density curve (**Figure 2**) shows the same shape without bins. No single graph shows everything: the histogram depends on the bins, the density curve hides the counts and the boxplot hides the shape. Changing the bins, zooming in or using a log scale only changes the picture, never the data, so all reported numbers stay in original rentals.
+
+### 5.3 One Categorical Variable: How the Days Are Split
+
+*Table 6. Frequency and relative frequency of weather, season and day type (days).*
+
+| Variable | Category | Days | Relative frequency | Percent |
 |---|---|---|---|---|
-| Winter | 181 | 2,209 | 2,604 | 11.7 |
-| Spring | 184 | 4,942 | 4,992 | 23.0 |
-| Summer | 188 | 5,354 | 5,644 | 29.3 |
-| Fall | 178 | 4,634 | 4,728 | 16.8 |
+| Weather | Clear | 463 | 0.633 | 63.3% |
+| Weather | Mist/cloudy | 247 | 0.338 | 33.8% |
+| Weather | Rain/snow | 21 | 0.029 | 2.9% |
+| Season | Winter | 181 | 0.248 | 24.8% |
+| Season | Spring | 184 | 0.252 | 25.2% |
+| Season | Summer | 188 | 0.257 | 25.7% |
+| Season | Fall | 178 | 0.244 | 24.4% |
+| Day type | Working day | 500 | 0.684 | 68.4% |
+| Day type | Weekend | 210 | 0.287 | 28.7% |
+| Day type | Holiday | 21 | 0.029 | 2.9% |
 
-Winter has a much lower median than the other seasons, and Summer the highest (**Figure 5**). By weather, clear days average 4,877 rentals, mist/cloudy days 4,036 (−17%) and rain/snow days 1,803 (−63%) (**Figure 6**). It would be easy to conclude from Figure 5 alone that the season itself drives demand, but the seasons also differ in temperature.
+Clear is the most common weather (63.3% of days), while only 21 days are rain or snow and only 21 are holidays, so averages for those groups rest on few days (**Figure 4**). The seasons are close to equal in size. Weather and season are shown in their natural order (from good to bad weather, and through the calendar); day type has no natural order, so it reads best sorted by frequency.
 
-### 5.6 Is It the Season or the Temperature?
+### 5.4 Two Numerical Variables: Weather and Rentals
 
-Because temperature is strongly related to rentals, the next step was to check whether temperature differs between seasons. It does: the median Winter day is about 12°C, compared with 29°C in Summer (**Figure 7**). Within each season, warmer days are still busier, especially in Winter and Spring, while in Summer the trend flattens because the hottest days lose riders (**Figure 8**).
+In the scatterplot of temperature and daily rentals (**Figure 5**), each point is a day. Transparency shows where days overlap (overplotting), and a smooth trend line shows the form of the relationship.
 
-The apparent "season effect" is therefore largely a temperature effect. The season comparison and the temperature comparison answer different questions: one compares groups of days that have different temperatures, and the other shows how rentals change as it gets warmer.
+| Measure | Correlation with daily rentals (r) | Strength |
+|---|---|---|
+| Temperature (°C) | +0.63 | Moderate positive |
+| Feels-like temperature (°C) | +0.63 | Moderate positive |
+| Humidity (%) | −0.10 | Very weak |
+| Wind speed (km/h) | −0.23 | Weak negative |
+
+Rentals rise as it gets warmer, but the relationship is not perfectly linear: the smooth line flattens and dips on the hottest days, and days at the same temperature still vary a lot. Compared with the straight-line fit, the smooth line shows where a straight line misses. Humidity and wind form wide clouds with only a slight slope, so on their own they say little about rentals, like depth vs price for the diamonds in Lab 5.
+
+### 5.5 A Numerical Variable Across Categories: Rentals by Group
+
+*Table 7. Grouped summaries of daily rentals.*
+
+| Group | Level | Days | Mean | Median | First quartile | Third quartile | IQR |
+|---|---|---|---|---|---|---|---|
+| Season | Winter | 181 | 2,604 | 2,209 | 1,538 | 3,456 | 1,918 |
+| Season | Spring | 184 | 4,992 | 4,942 | 4,003 | 6,377 | 2,374 |
+| Season | Summer | 188 | 5,644 | 5,354 | 4,587 | 6,929 | 2,343 |
+| Season | Fall | 178 | 4,728 | 4,635 | 3,616 | 5,625 | 2,009 |
+| Weather | Clear | 463 | 4,877 | 4,844 | 3,637 | 6,459 | 2,822 |
+| Weather | Mist/cloudy | 247 | 4,036 | 4,040 | 2,675 | 5,258 | 2,583 |
+| Weather | Rain/snow | 21 | 1,803 | 1,817 | 705 | 2,424 | 1,719 |
+| Day type | Working day | 500 | 4,585 | 4,582 | 3,344 | 5,988 | 2,643 |
+| Day type | Weekend | 210 | 4,390 | 4,468 | 2,765 | 5,872 | 3,106 |
+| Day type | Holiday | 21 | 3,735 | 3,351 | 1,951 | 6,034 | 4,083 |
+
+Summer has the highest median and Winter by far the lowest (**Figure 6**). In Winter the mean is well above the median, a sign of right skew within the season. By weather, mean rentals drop 17% from clear to mist/cloudy days and 63% on rain/snow days. Holidays have the lowest median and the widest spread, but only 21 days. The dashboard shows Figure 6 as a boxplot (medians, IQR, outliers), a violin plot (the shape), jittered points (every day) or a bar of means. The bar of means is the easiest to read but hides the spread, which is why the other three are better.
+
+It would be easy to conclude that the season itself drives demand, but Lab 6 showed that a third variable can be behind a group difference (for diamonds, carat explained why Fair cuts cost more). Here that variable is temperature: the median Winter day is about 12°C, compared with 29°C in Summer (**Figure 7**).
+
+### 5.6 Two Categorical Variables: Season and Weather
+
+*Table 8. Days by season and weather (row percentages in brackets).*
+
+| Season | Clear | Mist/cloudy | Rain/snow | Total |
+|---|---|---|---|---|
+| Winter | 111 (61.3%) | 66 (36.5%) | 4 (2.2%) | 181 |
+| Spring | 113 (61.4%) | 68 (37.0%) | 3 (1.6%) | 184 |
+| Summer | 136 (72.3%) | 48 (25.5%) | 4 (2.1%) | 188 |
+| Fall | 103 (57.9%) | 65 (36.5%) | 10 (5.6%) | 178 |
+| Total | 463 (63.3%) | 247 (33.8%) | 21 (2.9%) | 731 |
+
+Summer has the most clear days (72%) and Fall the fewest (58%) (**Figure 8**). The direction of the percentage matters: 5.6% of Fall days had rain or snow (row percentage), but of all 21 rain/snow days, 48% were in Fall (column percentage). The two answer different questions because they divide by different totals. If season and weather were not associated, every bar in the 100% stacked chart would have the same mix. The mix changes from season to season, so the two are associated, which means part of a season's demand can be a weather effect. The heatmap view shows that clear Summer days are the most common combination.
+
+### 5.7 Temperature Groups and Demand Level
+
+Temperature was cut into 5 equal-width groups (`cut(temp_c, 5)`), and each day was given a demand level from its rentals: Low (up to 3,741), Medium (up to 5,312) and High (above 5,312), the lowest, middle and highest third of the days.
+
+*Table 9. Demand level by temperature group (row percentages, each row adds to 100%).*
+
+| Temperature group | Days | Low | Medium | High |
+|---|---|---|---|---|
+| 2.4–9.0°C | 42 | 100% | 0% | 0% |
+| 9.0–15.6°C | 194 | 66% | 24% | 10% |
+| 15.6–22.1°C | 174 | 30% | 37% | 33% |
+| 22.1–28.7°C | 194 | 8% | 41% | 51% |
+| 28.7–35.3°C | 127 | 3% | 43% | 54% |
+
+High-demand days get more common as it warms up: none of the coldest days are high-demand, compared with 54% of the hottest (**Figure 9**). The rise slows between the two warmest groups, matching the flattening in Figure 5. The count chart shows that the coldest group has only 42 days, while the proportional chart makes the mix easy to compare but hides group size, so the two are read together.
+
+### 5.8 Correlation: How Strong Are the Relationships?
+
+In the correlation matrix (**Figure 10**), the diagonal is 1 and each value appears twice, because r(a, b) = r(b, a). The strongest pair is temperature and feels-like temperature (r = +0.99), which measure nearly the same thing, like a diamond's x, y and z in Lab 9. Of the weather measures, temperature and feels-like temperature go with rentals most closely (r = +0.63) and humidity is closest to zero (r = −0.10). A value near zero does not prove there is no relationship, only no straight-line one.
+
+*Table 10. Correlation between temperature and daily rentals, overall and within each season.*
+
+| Days | Number of days | r (temperature, rentals) | Strength |
+|---|---|---|---|
+| All days | 731 | +0.63 | Moderate positive |
+| Winter | 181 | +0.67 | Moderate positive |
+| Spring | 184 | +0.48 | Moderate positive |
+| Summer | 188 | −0.03 | Very weak |
+| Fall | 178 | +0.40 | Weak positive |
+
+Within each season, warmer days are still busier, especially in Winter and Spring (**Figure 11**). In Summer r is close to zero even though the scatterplot shows a pattern: rentals rise and then fall on the hottest days, and a single r cannot describe a curve.
+
+The apparent "season effect" is therefore largely a temperature effect. The season comparison and the temperature comparison answer different questions: one compares groups of days that have different temperatures, and the other shows how rentals change as it gets warmer. This is still an association in observational data: daylight hours, holidays and the 2011 to 2012 growth also change across the year.
 
 ---
 
@@ -232,7 +321,7 @@ This is observational data, so the analysis identifies associations rather than 
 
 ## 9 Conclusion
 
-Bike rental demand follows clear and predictable patterns: a commuter rhythm on working days, a leisure peak on weekend afternoons, strong growth from 2011 to 2012, and sharp drops in rain or snow. Rentals are strongly associated with temperature, and the low demand in Winter is largely explained by colder temperatures rather than the season itself. The interactive dashboard brings these findings together so that an operator can see when demand is high, what disrupts it, who rides, and what to do about it, and can explore any day or hour in detail.
+Bike rental demand follows clear and predictable patterns: a commuter rhythm on working days, a leisure peak on weekend afternoons, strong growth from 2011 to 2012, and sharp drops in rain or snow. Rentals have a moderate positive association with temperature (r = +0.63), and the low demand in Winter is largely explained by colder temperatures rather than the season itself. The interactive dashboard brings these findings together so that an operator can see when demand is high, what disrupts it, who rides, and what to do about it, and can explore any day or hour in detail.
 
 ---
 
@@ -278,22 +367,22 @@ day["wind"] = day["windspeed"] * 67
 ### A.2 Summary Statistics and Frequency Tables
 
 ```python
-#Table 4: summary statistics
+#Table 5: summary statistics
 day["cnt"].describe()
 
-#Table 5: days and percentage in each weather category
+#Table 6: days and relative frequency in each weather category
 counts = day["weather"].value_counts()
-pd.DataFrame({"Days": counts, "Percentage": (counts / len(day) * 100).round(1)})
+pd.DataFrame({"Days": counts, "Relative frequency": (counts / len(day)).round(3)})
 
-#Table 6: correlation of daily rentals with the weather measurements
-day[["cnt", "temp_c", "humidity", "wind"]].corr()["cnt"]
+#Figure 10: correlation matrix of the weather measurements and rentals
+day[["temp_c", "atemp", "humidity", "wind", "casual", "registered", "cnt"]].corr()
 
-#Table 7: rentals and temperature by season
+#Table 7: grouped summaries by season
 day.groupby("season").agg(days=("cnt", "size"), median_rentals=("cnt", "median"),
                           mean_rentals=("cnt", "mean"), median_temp=("temp_c", "median"))
 ```
 
-### A.3 Histogram (Figures 1–3)
+### A.3 Histogram (Figure 1)
 
 ```python
 import altair as alt
@@ -301,25 +390,25 @@ import altair as alt
 alt.Chart(day).mark_bar().encode(
     x=alt.X("cnt:Q", bin=alt.Bin(maxbins=30), title="Rentals per day"),
     y=alt.Y("count():Q", title="Number of days"),
-).properties(title="Daily Rentals Are Spread Fairly Evenly")
+).properties(title="Daily Rentals Are Fairly Symmetric")
 ```
 
-### A.4 Scatterplot with a Trend Line (Figure 4)
+### A.4 Scatterplot with a Trend Line (Figure 5)
 
 ```python
-points = alt.Chart(day).mark_circle(opacity=0.45).encode(x="temp_c:Q", y="cnt:Q")
+points = alt.Chart(day).mark_circle(opacity=0.3)  #see-through points for overplotting.encode(x="temp_c:Q", y="cnt:Q")
 trend = alt.Chart(day).transform_loess("temp_c", "cnt").mark_line(color="orange").encode(x="temp_c:Q", y="cnt:Q")
-(points + trend).properties(title="Warmer Days Bring More Riders, Up to a Point")
+(points + trend).properties(title="Moderate Positive Relationship Between Temperature and Rentals")
 ```
 
-### A.5 Boxplots and Small Multiples (Figures 5–8)
+### A.5 Boxplots and Small Multiples (Figures 6, 7 and 11)
 
 ```python
-#rentals by season (Figure 5), the same pattern works for weather and temperature
+#rentals by season (Figure 6), the same pattern works for weather and temperature (Figure 7)
 alt.Chart(day).mark_boxplot().encode(
     x=alt.X("season:N", sort=["Winter", "Spring", "Summer", "Fall"]), y="cnt:Q")
 
-#one panel per season with its own trend line (Figure 8)
+#one panel per season with its own trend line (Figure 11)
 base = alt.Chart(day).encode(x="temp_c:Q", y="cnt:Q")
 panel = alt.layer(base.mark_circle(opacity=0.4),
                   base.transform_loess("temp_c", "cnt", groupby=["season"]).mark_line(color="orange"))
@@ -359,15 +448,16 @@ The work is split between Python and JavaScript:
 
 ### What's on the Page
 
-Built with HTML, CSS, JavaScript and Vega-Lite, in the Poppins font with a charcoal and red color scheme and a dark mode.
+Built with HTML, CSS, JavaScript and Vega-Lite, in the Poppins font with a navy, steel blue, light blue and coral color palette ("Harbor", text colors adjusted where needed to pass the WCAG AA contrast check) and a dark mode.
 
-- **Filter bar** (stays at the top while scrolling): rider type, year, season, day type, weather, reset and a **dark mode / light mode** button, plus links to each section.
-- **Overview:** headline numbers with comparisons, and a daily chart of actual vs expected rentals with disrupted days and known events labeled.
-- **Drill-downs:** click any day to open its details (with Prev / Next), and click a heatmap cell to break down that hour of the week (its season and weather lists filter the whole page).
-- **Section 1 – When is demand high?** Weekday × hour heatmap (click a cell to break it down) and the daily rhythm by day type.
-- **Section 2 – What disrupts it?** The disrupted days table (click a row to open that day).
+A **sidebar menu** opens one part of the dashboard at a time, so there is no long page to scroll; on a phone it becomes a menu bar across the top. Each part has its own address (like `#when` or `#analysis-3`), so the browser's back button works and a link can open a specific part. The **filter bar** (rider type, year, season, day type, weather and reset) stays at the top of every part except Home, and the **dark mode / light mode** button is in the sidebar.
+
+- **Home:** the research question, four key findings, and one button per course lab.
+- **Overview:** headline numbers with comparisons, and a daily chart of actual vs expected rentals with disrupted days and known events labeled. Click any day to open its details (with Prev / Next).
+- **Section 1 – When is demand high?** Weekday × hour heatmap (click a cell to break it down; its season and weather lists filter the whole page) and the daily rhythm by day type.
+- **Section 2 – What disrupts it?** The disrupted days table (click a row to open that day in the Overview).
 - **Section 3 – Who rides?** Commuters vs leisure riders through the day, on working days and weekends.
-- **Section 4 – Exploratory data analysis:** the report-style tables and Figures 1–8 from Section 5 of this report.
+- **Section 4 – Analysis (course labs):** the tables and Figures 1–11 from Section 5 of this report, one lab at a time (Labs 2–9) with Previous / Next. Each part shows a one-line takeaway, with the full explanation under **Read more**. Buttons above each chart switch between the views compared in the labs, such as the number of bins, boxplot vs violin vs jittered points, or count vs proportional bars.
 - **Data table:** the filtered days, with a **Download as CSV** button.
 
 ### Project Files
@@ -383,15 +473,16 @@ Built with HTML, CSS, JavaScript and Vega-Lite, in the Poppins font with a charc
 | `docs/js/state.js` | What the page remembers between clicks, and what each click does |
 | `docs/js/charts.js` | Chart helpers (Vega-Lite) |
 | `docs/js/format.js` | Number formatting and small HTML helpers (tables, legends, bar lists) |
-| `docs/js/stats.js` | Percentiles, skewness, correlation and histogram bins for Section 4 |
-| `docs/js/sections/` | One file per part of the page: `overview`, `daily`, `when`, `disrupt`, `riders`, `eda`, `footer` |
+| `docs/js/stats.js` | Percentiles, skewness, correlation, histogram bins, `cut()` groups and density curves for Section 4 |
+| `docs/js/sections/` | One file per part of the page: `nav` (sidebar), `home`, `overview`, `daily`, `when`, `disrupt`, `riders`, `eda`, `footer` (data table and footer) |
 | `docs/data/` | `days.json` and `hours.json`, made by `export_data.py` |
 | `export_data.py` | Runs the cleaning and the model, and saves the results for the website |
 | `prep.py` | Loads and cleans the data |
-| `model.py` | The demand model: expected rentals per day, known events, and saving the trained model |
+| `model.py` | The demand model: expected rentals per day, known events, and a cache so it only retrains when something changes |
 | `bike+sharing+dataset (1)/` | The dataset: `day.csv` and `hour.csv` |
 | `ProjectProposal.pdf` | The project proposal |
 | `DataSources.docx` | Section 2 (data sources, data directory, references) as a Word document |
+| `AnalysisPlan.docx` | Task outline and analysis plan: research questions, data preparation, Tasks 1–10 and the lab application table |
 
 ---
 

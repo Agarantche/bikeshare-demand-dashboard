@@ -6,9 +6,11 @@ function config() {
   return {
     font: "Poppins", background: null, view: { stroke: null },
     axis: { labelColor: C.MUTED, titleColor: C.MUTED, gridColor: C.LINE, domainColor: C.LINE, tickColor: C.LINE,
-      labelFontSize: 11, titleFontSize: 12, titleFontWeight: 500 },
-    axisY: { minExtent: 46 }, //room for numbers like 8,000
-    legend: { labelColor: C.MUTED, titleColor: C.MUTED },
+      labelFontSize: 11, titleFontSize: 12, titleFontWeight: 500, labelPadding: 4, titlePadding: 8, tickSize: 4 },
+    axisY: { minExtent: 46, domain: false }, //room for numbers like 8,000, no extra line down the side
+    //legends: small round keys lined up on the left, the same size as the html legends above the charts
+    legend: { labelColor: C.MUTED, titleColor: C.MUTED, labelFontSize: 11, titleFontSize: 11, titleFontWeight: 500,
+      symbolType: "circle", symbolSize: 80, symbolStrokeWidth: 0, columnPadding: 14, rowPadding: 6, padding: 2, offset: 10 },
     title: { color: C.HEAD, subtitleColor: C.MUTED, fontSize: 16, fontWeight: 600, anchor: "start", subtitleFontSize: 12, offset: 10 },
     header: { labelColor: C.HEAD, labelFontSize: 13, titleColor: C.HEAD },
   };
@@ -33,7 +35,7 @@ export async function draw(el, spec, onClick) {
 }
 
 //hour axis with a label every 3 hours like 0:00, 3:00
-export const HOUR_AXIS = { values: [0, 3, 6, 9, 12, 15, 18, 21], labelExpr: "datum.value + ':00'", title: null, grid: false };
+const HOUR_AXIS = { values: [0, 3, 6, 9, 12, 15, 18, 21], labelExpr: "datum.value + ':00'", title: null, grid: false };
 
 //lines by hour with a hover line that lists every series
 //rows are {hr, series, value}, colors is series -> color, dashed is a list of series to draw dashed,
