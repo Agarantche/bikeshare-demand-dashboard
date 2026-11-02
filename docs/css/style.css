@@ -67,7 +67,8 @@ a { color: var(--link); }
 .nav-sub.on::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: -14px; margin-right: 2px; }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 6px; }
 .credit { font-size: 11px; color: var(--muted); }
-.main { min-width: 0; max-width: 1180px; width: 100%; padding: 0 clamp(16px, 3vw, 36px) 32px; box-sizing: border-box; }
+/* the content grows with the window up to 1400px, then stays centered in the space next to the sidebar */
+.main { min-width: 0; max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 clamp(16px, 3vw, 40px) 32px; box-sizing: border-box; }
 #page { padding-top: 22px; }
 
 /* on a phone or a narrow window the sidebar turns into a menu bar across the top */
@@ -198,7 +199,10 @@ button.hb:hover { background: var(--hover); }
 .finds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 14px; margin-bottom: 14px; }
 .find p { margin: 0; font-size: 13px; color: var(--muted); flex: 1; }
 .find .link { align-self: flex-start; margin-top: 6px; }
-.lab-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 10px; margin-top: 8px; }
+/* the 8 lab cards always make even rows: 4 across, 2 across on medium screens, 1 on phones */
+.lab-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+@media (max-width: 1200px) { .lab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .lab-grid { grid-template-columns: 1fr; } }
 .lab-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer;
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px;
   transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease), border-color var(--t) var(--ease); }
