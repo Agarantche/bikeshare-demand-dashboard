@@ -1,4 +1,4 @@
-//the filter bar at the top, and the overview: the summary sentence, the 4 number cards (the daily chart is daily.js)
+//the filter bar at the top, and the overview: the summary sentence, the 4 number cards with their handwritten notes (the daily chart is daily.js)
 import { mean, hourlyAverage } from "../data.js";
 import { fint, fspct, fpct, section } from "../format.js";
 import { FILTERS, RIDERS } from "../settings.js";
@@ -12,10 +12,14 @@ function perYear(days) {
   return out;
 }
 
+//the rider type that was picked last time, so the highlighter only swipes across a newly picked one
+let shownRider = "all";
+
 //filter bar: rider type buttons, one dropdown per filter, reset, how many days are showing
 export function renderFilters(v, el) {
   const seg = Object.entries(RIDERS).map(([k, label]) =>
-    `<button data-rider="${k}" aria-pressed="${state.rider === k}">${label}</button>`).join("");
+    `<button data-rider="${k}" aria-pressed="${state.rider === k}"${state.rider === k && k !== shownRider ? ` class="swipe"` : ""}>${label}</button>`).join("");
+  shownRider = state.rider;
   const selects = Object.entries(FILTERS).map(([k, [, options, allLabel]]) =>
     `<select class="sel${state[k] !== "all" ? " on" : ""}" data-k="${k}" aria-label="${allLabel}">
       <option value="all">${allLabel}</option>${options.map((o) => `<option ${String(o) === state[k] ? "selected" : ""}>${o}</option>`).join("")}
@@ -33,7 +37,7 @@ export function renderFilters(v, el) {
 export function render(v, el) {
   const d = v.d;
   if (!d.length) {
-    el.innerHTML = section("Overview", "The whole picture at a glance", "sec-overview", "") +
+    el.innerHTML = section("Overview", "Two years of rides on one page", "sec-overview", "") +
       `<div class="warn">No days match these filters. Change one of them or click <b>Reset</b>.</div>`;
     return Promise.resolve();
   }
@@ -50,16 +54,24 @@ export function render(v, el) {
   const text = `Bikes average <b>${fint(mean(d, (x) => x.act))}</b> rentals a day in this view` +
     (py.yoy != null ? ` (${fspct(py.yoy)} in 2012 vs 2011)` : "") + `, busiest at <b>${peak}:00</b>. Capital Bikeshare, Washington DC, 2011–2012.`;
 
-  el.innerHTML = section("Overview", "The whole picture at a glance", "sec-overview", text) + `
+  //handwritten notes next to the numbers, picked from what the numbers actually say
+  const hourNote = peak >= 16 && peak <= 19 ? "everyone heading home" : peak >= 6 && peak <= 9 ? "everyone off to work"
+    : peak >= 11 && peak <= 15 ? "afternoon cruising" : "";
+  const regShare = share(d);
+  const shareNote = shareCol === "casual" ? "the fair-weather crowd" : regShare >= 0.7 ? "mostly commuters" : "lots of casual riders here";
+  const dayNote = v.disrupted.length ? "storms and holidays, mostly" : "nothing went wrong here";
+  const jot = (t) => (t ? `<span class="jot">← ${t}</span>` : "");
+
+  el.innerHTML = section("Overview", "Two years of rides on one page", "sec-overview", text) + `
   <div class="kpis">
-    <div class="kpi"><span class="kpi-l">Average rentals per day</span><span class="kpi-v">${fint(mean(d, (x) => x.act))}</span>
-      <span class="kpi-s">2011 → 2012: ${fint(py[2011])} → ${fint(py[2012])} ${yoyChip}</span></div>
+    <div class="kpi"><span class="kpi-l">Average rentals per day</span><span class="kpi-v ring">${fint(mean(d, (x) => x.act))}</span>
+      <span class="kpi-s">2011 → 2012: ${fint(py[2011])} → ${fint(py[2012])} ${yoyChip}</span>${jot("a normal day")}</div>
     <div class="kpi"><span class="kpi-l">Busiest hour</span><span class="kpi-v">${peak}:00</span>
-      <span class="kpi-s">${ratio.toFixed(1)}× an average hour</span></div>
-    <div class="kpi"><span class="kpi-l">${shareCol === "casual" ? "Casual" : "Registered"} share of rides</span><span class="kpi-v">${fpct(share(d))}</span>
-      <span class="kpi-s">Working days <b>${fpct(share(d.filter((x) => x.day_type === "Working day")))}</b> · weekends <b>${fpct(share(d.filter((x) => x.day_type === "Weekend")))}</b></span></div>
+      <span class="kpi-s">${ratio.toFixed(1)}× an average hour</span>${jot(hourNote)}</div>
+    <div class="kpi"><span class="kpi-l">${shareCol === "casual" ? "Casual" : "Registered"} share of rides</span><span class="kpi-v">${fpct(regShare)}</span>
+      <span class="kpi-s">Working days <b>${fpct(share(d.filter((x) => x.day_type === "Working day")))}</b> · weekends <b>${fpct(share(d.filter((x) => x.day_type === "Weekend")))}</b></span>${jot(shareNote)}</div>
     <div class="kpi"><span class="kpi-l">Disrupted days (&gt;50% below expected)</span><span class="kpi-v">${v.disrupted.length}</span>
-      <span class="kpi-s">≈ ${fint(lost)} rentals lost · <span class="chip bad">${fpct(lost / total, 1)}</span> of all rentals</span></div>
+      <span class="kpi-s">≈ ${fint(lost)} rentals lost · <span class="chip bad">${fpct(lost / total, 1)}</span> of all rentals</span>${jot(dayNote)}</div>
   </div>`;
   return Promise.resolve();
 }

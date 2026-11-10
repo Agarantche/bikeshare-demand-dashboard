@@ -23,7 +23,7 @@ const VIEWS = {
 };
 
 const $ = (id) => document.getElementById(id);
-let drawing = false, again = false, lastView = null;
+let drawing = false, again = false, lastView = null, lastLab = null, settle = null;
 
 //draws the open part of the page for the current filters
 async function render() {
@@ -35,7 +35,13 @@ async function render() {
   const newView = state.view !== lastView;
   const scrollY = newView ? 0 : window.scrollY; //a new part starts at the top
   page.style.minHeight = newView ? "" : page.offsetHeight + "px"; //keeps the page tall while it redraws so it doesnt jump
+  //the small journal animations (circles drawing, notes writing in) only play when a part opens, see style.css
+  page.classList.toggle("opening", newView);
+  page.classList.toggle("turned", newView || state.lab !== lastLab);
+  clearTimeout(settle);
+  settle = setTimeout(() => page.classList.remove("opening", "turned"), 1800);
   lastView = state.view;
+  lastLab = state.lab;
 
   nav.render(v, $("side"), render);
   $("filters").hidden = state.view === "home"; //the home page always shows everything
@@ -59,7 +65,9 @@ async function render() {
 
 async function start() {
   try {
-    await load();
+    //waits for the 3 fonts too, so the charts measure their text with the right font the first time
+    const fonts = ["600 16px Fraunces", "16px Karla", "700 16px Caveat"].map((f) => document.fonts.load(f).catch(() => {}));
+    await Promise.all([load(), ...fonts]);
   } catch (e) {
     $("page").innerHTML = `<div class="warn">Couldn't load the data. If you opened index.html straight from your files, start a small
       web server instead, because browsers block loading data files that way.</div>`;

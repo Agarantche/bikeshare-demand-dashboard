@@ -1,5 +1,5 @@
 //daily rentals chart (actual vs expected) and the day details that open under it
-import { draw } from "../charts.js";
+import { draw, hand } from "../charts.js";
 import { DATA, hourOf, mean } from "../data.js";
 import { esc, fdate, fint, fspct, head, legend } from "../format.js";
 import { ABOVE, DISRUPTED, MONTHS, RIDERS } from "../settings.js";
@@ -15,7 +15,7 @@ let shown = null;
 export function render(v, el) {
   const anyFilter = v.anyFilter;
   el.innerHTML = `<div class="card" id="daily">
-    ${head("Daily rentals: actual vs expected",
+    ${head("Every single day, actual vs expected",
       "Expected is what the machine learning model predicts for a day with that weather, temperature, month and day type. Hover for numbers; click any day to see what happened.")}
     ${legend([[C.BLUE, "Actual", "ln"], [C.GRAY, "Expected", "ln"], [C.ORANGE, "Disrupted (&gt;50% below)", ""], [C.AQUA, "Well above (&gt;30%)", ""]]
       .concat(anyFilter ? [[C.BLUE, "Days in your filter", ""]] : []))}
@@ -89,14 +89,14 @@ function dailySpec(v, widthPx) {
   layers.push({ data: { values: flags }, mark: { type: "circle", opacity: 1, stroke: C.PANEL, strokeWidth: 1 },
     encoding: { x, y, color: { field: "fcolor", type: "nominal", scale: null }, size: { field: "fsize", type: "quantitative", scale: null } } });
   if (ann.length) {
-    //dashed lines from the labels down to their day, then the label text
-    layers.push({ data: { values: ann }, mark: { type: "rule", color: C.REF, strokeDash: [2, 3] },
+    //dashed lines from the labels down to their day, then the label text in handwriting
+    layers.push({ data: { values: ann }, mark: { type: "rule", color: C.PEN, opacity: 0.6, strokeDash: [2, 3] },
       encoding: { x, y: { field: "top", type: "quantitative", scale: yScale, axis: yAxis }, y2: { field: "bottom" } } });
     for (const strong of [false, true]) {
       for (const align of ["left", "right"]) {
         const part = ann.filter((a) => a.strong === strong && a.align === align);
         if (part.length) layers.push({ data: { values: part },
-          mark: { type: "text", align, dx: align === "left" ? 4 : -4, baseline: "bottom", fontSize: 12, color: C.FG, fontWeight: strong ? 600 : 400 },
+          mark: { type: "text", ...hand(strong ? 21 : 19), align, dx: align === "left" ? 4 : -4, baseline: "bottom" },
           encoding: { x, y: { field: "lane", type: "quantitative", scale: yScale, axis: yAxis }, text: { field: "text" } } });
       }
     }

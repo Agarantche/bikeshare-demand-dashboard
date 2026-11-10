@@ -10,13 +10,13 @@ import { C } from "../theme.js";
 let shown = null;
 
 export function render(v, el) {
-  el.innerHTML = section(1, "When is demand high?", "sec-when",
+  el.innerHTML = section(1, "When do people actually ride?", "sec-when",
     "Commuting shapes the week: working days spike at the morning and evening rush, weekends build to one broad " +
     "afternoon hump. Summer is the strongest season, and 2012 ran well ahead of 2011 in every month.") +
-    `<div class="card">${head("Rentals per hour across the week",
+    `<div class="card">${head("The whole week, hour by hour",
       "Average rentals in each hour of each weekday. The stronger the color, the busier the hour. Click a time slot to see what drives it.")}
       <div class="chart" id="heat" style="min-height:250px"></div><div id="slot"></div></div>
-    <div class="card">${head("The daily rhythm by day type",
+    <div class="card">${head("A day in the life: workdays vs days off",
       "Average rentals per hour. Two sharp commuter peaks on working days; one broad midday hump on weekends.")}
       ${legend([[C.BLUE, "Working day", "ln"], [C.YELLOW, "Weekend", "ln"], [C.GRAY, "Holiday", "dash"]])}
       <div class="chart" id="profile" style="min-height:250px"></div></div>`;
@@ -124,5 +124,9 @@ function profileSpec(v) {
     if (!days.length) continue;
     for (let h = 0; h < 24; h++) rows.push({ hr: h, series: t, value: mean(days, (d) => hourOf(d, h, v.col)) });
   }
-  return hourLines(rows, { "Working day": C.BLUE, "Weekend": C.YELLOW, "Holiday": C.GRAY }, { dashed: ["Holiday"] });
+  //handwritten notes on the two rush hours of the working day line
+  const work = rows.filter((r) => r.series === "Working day");
+  const peak = (from, to) => work.filter((r) => r.hr >= from && r.hr < to).reduce((a, b) => (b.value > a.value ? b : a));
+  const notes = work.length ? [{ ...peak(0, 12), text: "morning rush" }, { ...peak(12, 24), text: "evening rush" }] : [];
+  return hourLines(rows, { "Working day": C.BLUE, "Weekend": C.YELLOW, "Holiday": C.GRAY }, { dashed: ["Holiday"], notes });
 }

@@ -1,0 +1,151 @@
+---
+title: "Bike-Share Demand Analysis"
+author: "Adam Garantche"
+date: "ASCI 2000 Final Project"
+output: html_document
+---
+
+```{r setup, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+This project uses the UCI Bike Sharing Dataset (Capital Bikeshare, Washington, D.C., 2011–2012) to see how time, season, weather and type of day are related to bike rentals.
+
+# Lab 2 – Variable Types and Factor Levels
+
+```{r, message = FALSE}
+day <- read_csv("day.csv")
+hour <- read_csv("hour.csv")
+
+dim(day)
+str(day)
+
+#season and weather are stored as numbers
+class(day$season)
+summary(day$season)
+```
+
+```{r}
+#turn the number codes into labelled factors
+day$season <- factor(day$season, levels = 1:4, labels = c("Winter", "Spring", "Summer", "Fall"))
+day$weather <- factor(day$weathersit, levels = 1:3, labels = c("Clear", "Mist/cloudy", "Rain/snow"))
+day$year <- factor(day$yr, levels = 0:1, labels = c("2011", "2012"))
+
+#temperature and humidity are stored from 0 to 1, so put them back in real units
+day$temp_c <- day$temp * 41
+day$humidity <- day$hum * 100
+day$wind_kmh <- day$windspeed * 67
+
+class(day$season)
+levels(day$season)
+summary(day$season)
+summary(day$weather)
+```
+
+**Interpretation:** the daily file has 731 days and the hourly file has 17,379 hours. Season and weather were stored as numbers, so `summary()` gave a meaningless average. After turning them into factors, `summary()` counts the days in each category: the seasons are about equal in size, and most days are clear (463), with only 21 rain or snow days.
+
+# Lab 3 – Univariate Numerical Analysis
+
+```{r}
+summary(day$cnt)
+summary(hour$cnt)
+```
+
+```{r}
+ggplot(day, aes(x = cnt)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  labs(title = "Daily rentals", x = "Rentals per day", y = "Number of days")
+
+ggplot(day, aes(x = cnt)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Boxplot of daily rentals", x = "Rentals per day")
+
+ggplot(hour, aes(x = cnt)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  labs(title = "Hourly rentals", x = "Rentals per hour", y = "Number of hours")
+
+ggplot(hour, aes(x = cnt)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  scale_x_log10() +
+  labs(title = "Hourly rentals (log scale)", x = "Rentals per hour", y = "Number of hours")
+```
+
+**Interpretation:** daily rentals are fairly symmetric: the mean (4,504) and median (4,548) are close, and the boxplot shows no outliers. Hourly rentals are right-skewed: most hours are quiet and a few rush hours are very busy, so the mean (189.5) is higher than the median (142). The log scale makes the quiet and busy hours easier to see. This means bikes are needed most in a few busy hours.
+
+# Lab 5 – Relationships Between Two Numerical Variables
+
+```{r, message = FALSE}
+ggplot(day, aes(x = temp_c, y = cnt)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(color = "red") +
+  labs(title = "Temperature vs daily rentals", x = "Temperature (°C)", y = "Rentals per day")
+
+ggplot(day, aes(x = humidity, y = cnt)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(color = "red") +
+  labs(title = "Humidity vs daily rentals", x = "Humidity (%)", y = "Rentals per day")
+```
+
+**Interpretation:** warmer days have more rentals, so the relationship is positive. It is not a straight line: the trend flattens and drops a little on the hottest days. Humidity has almost no trend, so temperature explains rentals much better than humidity.
+
+# Lab 6 – Numerical Variables Across Categories
+
+```{r}
+aggregate(cnt ~ season, data = day, FUN = median)
+aggregate(cnt ~ weather, data = day, FUN = mean)
+```
+
+```{r}
+ggplot(day, aes(x = season, y = cnt)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Daily rentals by season", x = "Season", y = "Rentals per day")
+
+ggplot(day, aes(x = weather, y = cnt)) +
+  geom_violin(fill = "lightblue") +
+  labs(title = "Daily rentals by weather", x = "Weather", y = "Rentals per day")
+
+#temperature might explain the season differences
+ggplot(day, aes(x = season, y = temp_c)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Temperature by season", x = "Season", y = "Temperature (°C)")
+```
+
+**Interpretation:** Winter has the lowest median (2,209 rentals a day) and Summer the highest (5,354). Rain or snow days average about 63% fewer rentals than clear days. The last boxplot shows that Winter is much colder than the other seasons, so part of the low Winter numbers comes from temperature, not just the season.
+
+# Lab 7 – Relationships Between Two Categorical Variables
+
+```{r}
+weather_season <- table(day$season, day$weather)
+weather_season
+
+#row percentages: the weather mix in each season
+round(prop.table(weather_season, 1) * 100, 1)
+```
+
+```{r}
+ggplot(day, aes(x = season, fill = weather)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Weather by season", x = "Season", y = "Number of days")
+
+ggplot(day, aes(x = season, fill = weather)) +
+  geom_bar(position = "fill") +
+  labs(title = "Weather mix by season", x = "Season", y = "Proportion of days")
+```
+
+**Interpretation:** Summer has the most clear days (72.3%) and Fall has the most rain or snow days (5.6%). Because the weather mix changes from season to season, season and weather are associated. Rain or snow is rare in every season, so those percentages are based on only a few days.
+
+# Lab 9 – Correlation Analysis
+
+```{r}
+cor(day$temp_c, day$cnt)
+cor(day$humidity, day$cnt)
+
+#correlation matrix
+round(cor(day[, c("temp_c", "humidity", "wind_kmh", "casual", "registered", "cnt")]), 2)
+```
+
+**Interpretation:** temperature and rentals have a moderate positive correlation (about 0.63). Humidity (about −0.10) and wind speed (about −0.23) have weak negative correlations. Registered rentals are very strongly correlated with total rentals because most riders are registered. A correlation does not prove that temperature causes more rentals, because other things like daylight and school breaks also change with the seasons.
+
+# Conclusion
+
+Bike rentals are highest on warm, clear days and lowest in Winter and in rain or snow. Most rentals happen in a few busy hours. Temperature has the strongest relationship with rentals, and it explains much of the difference between seasons. These results can help a bike-share company plan bikes for busy periods and schedule maintenance on slow days.

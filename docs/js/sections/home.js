@@ -34,19 +34,19 @@ export function render(v, el) {
       <div class="question"><b>The question:</b> how are the time of day, the season, the weather and the type of day related to the number
       of bike rentals, and how do casual and registered riders differ?</div>
       <div class="hero-btns"><button class="btn primary" data-go="overview">Start with the overview →</button>
-        <button class="btn" data-go="analysis" data-lab="1">See the analysis</button></div>
+        <button class="btn" data-go="analysis" data-lab="1">See my work</button></div>
     </div>
 
-    <div class="over">Four key findings</div>
+    <div class="over">Four things the data told me</div>
     <div class="finds">
-      ${finding(`${peak}:00`, "When", `The busiest hour on working days, with a second commuter peak at ${morning}:00. The quietest time is around
-        ${quiet}:00, with about ${fint(all[quiet])} rentals an hour.`, "when", null, "When is demand high?")}
-      ${finding(fspct(rain), "Weather", `Rain or snow days have ${fpct(Math.abs(rain))} fewer rentals than clear days, and warmer days are busier
+      ${finding(`${peak}:00`, "the rush is real", `The busiest hour on working days, with a second commuter peak at ${morning}:00. The quietest time is around
+        ${quiet}:00, with about ${fint(all[quiet])} rentals an hour.`, "when", null, "When do people ride?")}
+      ${finding(fspct(rain), "rain ruins everything", `Rain or snow days have ${fpct(Math.abs(rain))} fewer rentals than clear days, and warmer days are busier
         (r = +${r.toFixed(2)}).`, "analysis", 4, "Weather and rentals")}
-      ${finding(disrupted, "Disruptions", "days fell more than 50% below what the model expected for their weather, mostly storms like Hurricane Sandy and holidays.",
-        "disrupt", null, "What disrupts it?")}
-      ${finding(fpct(reg), "Riders", "of rentals are by registered members, who ride at commute times. Casual riders come out on warm weekend afternoons.",
-        "riders", null, "Who rides?")}
+      ${finding(disrupted, "days that went sideways", "days fell more than 50% below what the model expected for their weather, mostly storms like Hurricane Sandy and holidays.",
+        "disrupt", null, "What throws it off?")}
+      ${finding(fpct(reg), "mostly commuters", "of rentals are by registered members, who ride at commute times. Casual riders come out on warm weekend afternoons.",
+        "riders", null, "Who's riding?")}
     </div>
 
     <div class="card">

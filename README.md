@@ -448,16 +448,16 @@ The work is split between Python and JavaScript:
 
 ### What's on the Page
 
-Built with HTML, CSS, JavaScript and Vega-Lite, in the Poppins font with a navy, steel blue, light blue and coral color palette ("Harbor", text colors adjusted where needed to pass the WCAG AA contrast check) and a dark mode.
+Built with HTML, CSS, JavaScript and Vega-Lite. The dashboard is styled as a **ride journal**: paper-colored pages, serif headings (Fraunces), handwritten notes in red pen (Caveat) next to the numbers and on the charts, a yellow highlighter for whatever is selected, and each takeaway on a sticky note. Body text is set in Karla, all text passes the WCAG AA contrast check, and there is a dark mode ("Night ride").
 
 A **sidebar menu** opens one part of the dashboard at a time, so there is no long page to scroll; on a phone it becomes a menu bar across the top. Each part has its own address (like `#when` or `#analysis-3`), so the browser's back button works and a link can open a specific part. The **filter bar** (rider type, year, season, day type, weather and reset) stays at the top of every part except Home, and the **dark mode / light mode** button is in the sidebar.
 
 - **Home:** the research question, four key findings, and one button per course lab.
 - **Overview:** headline numbers with comparisons, and a daily chart of actual vs expected rentals with disrupted days and known events labeled. Click any day to open its details (with Prev / Next).
-- **Section 1 – When is demand high?** Weekday × hour heatmap (click a cell to break it down; its season and weather lists filter the whole page) and the daily rhythm by day type.
-- **Section 2 – What disrupts it?** The disrupted days table (click a row to open that day in the Overview).
-- **Section 3 – Who rides?** Commuters vs leisure riders through the day, on working days and weekends.
-- **Section 4 – Analysis (course labs):** the tables and Figures 1–11 from Section 5 of this report, one lab at a time (Labs 2–9) with Previous / Next. Each part shows a one-line takeaway, with the full explanation under **Read more**. Buttons above each chart switch between the views compared in the labs, such as the number of bins, boxplot vs violin vs jittered points, or count vs proportional bars.
+- **Section 1 – When do people actually ride?** Weekday × hour heatmap (click a cell to break it down; its season and weather lists filter the whole page) and the daily rhythm by day type.
+- **Section 2 – What knocks demand off course?** A note on the worst day and the disrupted days table (click a row to open that day in the Overview).
+- **Section 3 – Who's on the bikes?** Commuters vs leisure riders through the day, on working days and weekends, with the commute peaks labeled.
+- **Section 4 – Showing my work (exploratory data analysis):** the tables and Figures 1–11 from Section 5 of this report, one lab at a time (Labs 2–9) with Previous / Next. Each part shows a one-line takeaway on a sticky note, with the full explanation under **Read more**. Buttons above each chart switch between the views compared in the labs, such as the number of bins, boxplot vs violin vs jittered points, or count vs proportional bars.
 - **Data table:** the filtered days, with a **Download as CSV** button.
 
 ### Project Files

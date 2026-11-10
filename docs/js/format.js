@@ -43,10 +43,11 @@ export function head(title, note, id) {
 }
 
 //heading at the top of each part of the page, num is the section number (or a small label like "Overview")
-export function section(num, title, id, text) {
+//what goes after the section number in the small handwritten line, like "exploratory data analysis"
+export function section(num, title, id, text, what = "") {
   const numbered = typeof num === "number";
   return `<div class="sec" id="${id}">${numbered ? `<span class="sec-n">${num}</span>` : ""}
-    <div><div class="sec-k">${numbered ? `Section ${num} of 4` : num}</div><h1 class="sec-h">${title}</h1></div></div>
+    <div><div class="sec-k">${numbered ? `Section ${num} of 4` : num}${what ? ` · ${what}` : ""}</div><h1 class="sec-h">${title}</h1></div></div>
     ${text ? `<p class="sec-p">${text}</p>` : ""}`;
 }
 

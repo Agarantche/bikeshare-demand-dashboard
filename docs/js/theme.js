@@ -1,17 +1,18 @@
 //colors for the charts in light and dark mode (the page colors are in css/style.css)
-//the names are kept from the python version: BLUE is the main chart color (steel blue in light mode, light blue in dark),
-//ORANGE is the highlight color (coral), AQUA marks good days (green), YELLOW is a 4th category color (a deeper coral)
-//RAMP is for ordered categories from light to strong (clear -> rain, low -> high demand), ON_ACC is text on coral
+//the charts are drawn with the same pens as the journal. the names are kept from the python version:
+//BLUE is the main chart color (blue ink), ORANGE is the highlight color (red pen), AQUA marks good days (green pen),
+//YELLOW is a 4th category color (amber), GRAY is pencil, PEN is the red used for handwritten notes on the charts
+//RAMP is for ordered categories from light to strong (clear -> rain, low -> high demand), ON_ACC is text on the red
 const PALETTE = {
   light: {
-    BLUE: "#3d5a80", ORANGE: "#ee6c4d", AQUA: "#3a9b7a", YELLOW: "#d4573a", GRAY: "#7d8999",
-    RAMP: ["#98c1d9", "#3d5a80", "#ee6c4d"], ON_ACC: "#1b2230",
-    FG: "#293241", MUTED: "#55606f", PANEL: "#ffffff", LINE: "#d7e3e8", HEAD: "#1b2230", REF: "#9aa7b5",
+    BLUE: "#2f4b7c", ORANGE: "#c0392b", AQUA: "#3d8f6a", YELLOW: "#a8690a", GRAY: "#8a8473", PEN: "#b3301f",
+    RAMP: ["#a5bbdd", "#4a6aa5", "#c0392b"], ON_ACC: "#ffffff",
+    FG: "#2b2a26", MUTED: "#655f52", PANEL: "#fffdf7", LINE: "#e0d9c6", HEAD: "#1c1b18", REF: "#b5ad9c",
   },
   dark: {
-    BLUE: "#98c1d9", ORANGE: "#ee6c4d", AQUA: "#7fd1ae", YELLOW: "#f59a82", GRAY: "#7f8ca0",
-    RAMP: ["#6b8bb3", "#98c1d9", "#ee6c4d"], ON_ACC: "#1b2230",
-    FG: "#e0fbfc", MUTED: "#a9b8c6", PANEL: "#293241", LINE: "#3a465a", HEAD: "#f4feff", REF: "#56637a",
+    BLUE: "#9db8e8", ORANGE: "#ff8370", AQUA: "#8fd4ae", YELLOW: "#f2c94c", GRAY: "#8f887a", PEN: "#ff9a85",
+    RAMP: ["#5d7bb0", "#a9c1ea", "#ff8370"], ON_ACC: "#1d1b18",
+    FG: "#f1ead9", MUTED: "#b5ad9c", PANEL: "#282521", LINE: "#423d35", HEAD: "#fffaf0", REF: "#5e574c",
   },
 };
 

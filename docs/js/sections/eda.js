@@ -4,7 +4,7 @@
 //every chart has a headline title and a "Figure N." caption, with a one line takeaway and the full explanation under "Read more"
 //it uses the filtered days and the picked rider type, so the numbers change with the filters
 //the buttons above a chart only redraw that chart (and its table and paragraph), not the whole page
-import { draw, titled } from "../charts.js";
+import { draw, hand, titled } from "../charts.js";
 import { hourOf, mean } from "../data.js";
 import { fint, fpct, section, table } from "../format.js";
 import { DAY_TYPES, RIDERS, SEASONS, WEATHERS, WEEKDAYS } from "../settings.js";
@@ -33,6 +33,9 @@ const DEMAND = ["Low", "Medium", "High"];
 //variables in the correlation matrix
 const CORR_VARS = [["temp_c", "Temperature"], ["feels_like_c", "Feels-like"], ["humidity", "Humidity"], ["wind", "Wind"],
   ["casual", "Casual"], ["registered", "Registered"], ["cnt", "All rentals"]];
+
+//the lab that was open last time (for the highlighter swipe on the lab buttons)
+let shownLab = null;
 
 //the 8 parts: [number, lab, short name, what it shows, full title] (the sidebar and home page use this too)
 export const LABS = [
@@ -241,10 +244,13 @@ export function render(v, el) {
   };
   const step = (m, dir) => (m < 1 || m > 8 ? `<span></span>` : `<button class="btn" data-lab="${m}">${dir < 0 ? "‹ " : ""}4.${m} ${LABS[m - 1][2]}${dir > 0 ? " ›" : ""}</button>`);
 
-  el.innerHTML = section(4, "Exploratory data analysis", "sec-eda",
-    "One part per course lab, applied to the bike data. Pick a lab below; the buttons above a chart change only that chart, and everything follows the filters at the top.") +
+  const swipe = n !== shownLab; //the highlighter only swipes across a newly opened lab
+  shownLab = n;
+  el.innerHTML = section(4, "Showing my work", "sec-eda",
+    "One part per course lab, applied to the bike data. Pick a lab below; the buttons above a chart change only that chart, and everything follows the filters at the top.",
+    "exploratory data analysis") +
   `<div class="lab-tabs" role="tablist">${LABS.map(([m, l, short]) =>
-    `<button class="lab-tab${m === n ? " on" : ""}" role="tab" aria-selected="${m === n}" data-lab="${m}"><b>4.${m}</b> ${short}<small>${l}</small></button>`).join("")}</div>
+    `<button class="lab-tab${m === n ? " on" + (swipe ? " swipe" : "") : ""}" role="tab" aria-selected="${m === n}" data-lab="${m}"><b>4.${m}</b> ${short}<small>${l}</small></button>`).join("")}</div>
   <div class="card lab-card-open">
     <div class="sub-row"><p class="sub">4.${n} ${title}</p><span class="pill">Task ${n} · ${lab}</span></div>
     <p class="take" id="k">${n === 1 ? "Categories stored as numbers in the file (season, weather) were turned into labelled, ordered levels before any analysis, and there are no missing values or duplicates." : ""}</p>
@@ -345,6 +351,11 @@ export function render(v, el) {
         encoding: { ...enc, tooltip: [{ field: "date", title: "Date" }, { field: xf, title: NUMS[xf], format: ".1f" }, { field: "act", title: "Rentals", format: "," }] } }];
       if (opt.trend !== "none") layer.push({ transform: [opt.trend === "loess" ? { loess: "act", on: xf, bandwidth: 0.4 } : { regression: "act", on: xf }],
         mark: { type: "line", color: C.ORANGE, strokeWidth: 3 }, encoding: enc });
+      //a handwritten note in the empty top right corner, where the hottest days fall short (only true with every day in view)
+      if (!v.anyFilter && (xf === "temp_c" || xf === "feels_like_c")) layer.push({
+        data: { values: [{ x: Math.max(...data.map((p) => p[xf])), y: Math.max(...data.map((p) => p.act)), text: "too hot to ride? ↓" }] },
+        mark: { type: "text", ...hand(21), align: "right", baseline: "top" },
+        encoding: { x: { field: "x", type: "quantitative", scale: { zero: false } }, y: { field: "y", type: "quantitative" }, text: { field: "text" } } });
       return draw(g("f5"), { height: 300, data: { values: data },
         title: { text: `${cap1(strength(r))} Relationship Between ${cap1(NUMS[xf].replace(/ \(.*/, ""))} and Rentals`,
           subtitle: `r = ${sign(r, 2)} · each dot is a day` + (opt.trend === "none" ? "" : `, the red line is the ${opt.trend === "loess" ? "smooth" : "straight-line"} trend`) },
@@ -528,7 +539,7 @@ export function render(v, el) {
     const k = b.dataset.o;
     if (opt[k] === b.dataset.v) return;
     opt[k] = b.dataset.v;
-    el.querySelectorAll(`[data-o="${k}"]`).forEach((x) => x.setAttribute("aria-pressed", x.dataset.v === opt[k]));
+    el.querySelectorAll(`[data-o="${k}"]`).forEach((x) => { x.setAttribute("aria-pressed", x.dataset.v === opt[k]); x.classList.toggle("swipe", x === b); });
     uses[k].forEach((p) => parts[p]());
   }));
 

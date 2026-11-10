@@ -1,19 +1,25 @@
 //draws vega-lite charts (the same chart system altair uses) and the chart helpers the sections share
 import { C, mode } from "./theme.js";
 
-//chart styling that matches the page: poppins font, see-through background, soft grid lines
+//chart styling that matches the page: karla for the numbers, fraunces for the titles, see-through background, dotted grid lines
 function config() {
   return {
-    font: "Poppins", background: null, view: { stroke: null },
-    axis: { labelColor: C.MUTED, titleColor: C.MUTED, gridColor: C.LINE, domainColor: C.LINE, tickColor: C.LINE,
-      labelFontSize: 11, titleFontSize: 12, titleFontWeight: 500, labelPadding: 4, titlePadding: 8, tickSize: 4 },
+    font: "Karla", background: null, view: { stroke: null },
+    axis: { labelColor: C.MUTED, titleColor: C.MUTED, gridColor: C.LINE, gridDash: [2, 4], domainColor: C.REF, tickColor: C.REF,
+      labelFontSize: 12, titleFontSize: 13, titleFontWeight: 500, labelPadding: 4, titlePadding: 8, tickSize: 4 },
     axisY: { minExtent: 46, domain: false }, //room for numbers like 8,000, no extra line down the side
     //legends: small round keys lined up on the left, the same size as the html legends above the charts
-    legend: { labelColor: C.MUTED, titleColor: C.MUTED, labelFontSize: 11, titleFontSize: 11, titleFontWeight: 500,
+    legend: { labelColor: C.MUTED, titleColor: C.MUTED, labelFontSize: 12, titleFontSize: 12, titleFontWeight: 500,
       symbolType: "circle", symbolSize: 80, symbolStrokeWidth: 0, columnPadding: 14, rowPadding: 6, padding: 2, offset: 10 },
-    title: { color: C.HEAD, subtitleColor: C.MUTED, fontSize: 16, fontWeight: 600, anchor: "start", subtitleFontSize: 12, offset: 10 },
-    header: { labelColor: C.HEAD, labelFontSize: 13, titleColor: C.HEAD },
+    title: { font: "Fraunces", color: C.HEAD, subtitleFont: "Karla", subtitleColor: C.MUTED, fontSize: 19, fontWeight: 600, anchor: "start",
+      subtitleFontSize: 13, offset: 10 },
+    header: { labelFont: "Fraunces", labelColor: C.HEAD, labelFontSize: 15, labelFontWeight: 600, titleColor: C.HEAD },
   };
+}
+
+//handwritten notes on a chart, in the red pen. use it like { type: "text", ...hand(), align: "left" }
+export function hand(size = 19) {
+  return { font: "Caveat", fontSize: size, fontWeight: 700, color: C.PEN };
 }
 
 //draws a chart into el. onClick gets the data of whatever was clicked (a day, a heatmap cell...)
@@ -39,8 +45,8 @@ const HOUR_AXIS = { values: [0, 3, 6, 9, 12, 15, 18, 21], labelExpr: "datum.valu
 
 //lines by hour with a hover line that lists every series
 //rows are {hr, series, value}, colors is series -> color, dashed is a list of series to draw dashed,
-//opacity is series -> how faded the line is
-export function hourLines(rows, colors, { dashed = [], opacity = {}, ymax = null, height = 230 } = {}) {
+//opacity is series -> how faded the line is, notes are handwritten labels like {hr, value, text} written above that point
+export function hourLines(rows, colors, { dashed = [], opacity = {}, ymax = null, height = 230, notes = [] } = {}) {
   const series = Object.keys(colors).filter((s) => rows.some((r) => r.series === s));
   const data = rows.map((r) => ({ ...r, op: opacity[r.series] ?? 1 }));
   const color = { field: "series", type: "nominal", scale: { domain: Object.keys(colors), range: Object.values(colors) }, legend: null };
@@ -59,6 +65,7 @@ export function hourLines(rows, colors, { dashed = [], opacity = {}, ymax = null
           tooltip: [{ field: "hr", type: "quantitative", title: "Hour" }, ...series.map((s) => ({ field: s, type: "quantitative", format: ",.0f" }))] } },
       { mark: { type: "point", filled: true, size: 50 },
         encoding: { x, y, color, opacity: { condition: { param: "hover", empty: false, value: 1 }, value: 0 } } },
+      ...(notes.length ? [{ data: { values: notes }, mark: { type: "text", ...hand(), dy: -12 }, encoding: { x, y, text: { field: "text" } } }] : []),
     ],
   };
 }

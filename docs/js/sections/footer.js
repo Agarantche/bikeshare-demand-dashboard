@@ -7,7 +7,7 @@ const COLUMNS = ["date", "season", "weekday", "day_type", "weather", "temp_c", "
 
 export function render(v, el) {
   const rows = v.d.map((d) => `<tr>${COLUMNS.map((c) => `<td>${esc(d[c])}</td>`).join("")}</tr>`).join("");
-  el.innerHTML = section("Data", "The filtered data", "sec-data",
+  el.innerHTML = section("Data", "The raw notes", "sec-data",
     `The ${v.d.length.toLocaleString()} days that match the filters, one row per day, with the model's expected rentals.`) +
     `<div class="card"><p><button class="btn" id="csv">Download as CSV</button></p>
       <div class="tbl-wrap" style="max-height:70vh"><table class="tbl"><thead><tr>${COLUMNS.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
@@ -28,7 +28,8 @@ export function render(v, el) {
 //the footer under every page
 export function footerHtml() {
   return `<footer class="footer">
-      <span>Made by <b>Adam Garantche</b> · © ${new Date().getFullYear()} Adam Garantche. All rights reserved.</span>
+      <span class="sig">Adam Garantche</span>
+      <span>© ${new Date().getFullYear()} Adam Garantche. All rights reserved.</span>
       <span>Data: Capital Bikeshare via the <a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener">UCI Machine Learning Repository</a></span>
     </footer>`;
 }
