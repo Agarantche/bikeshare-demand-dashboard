@@ -14,8 +14,10 @@ This project uses the UCI Bike Sharing Dataset (Capital Bikeshare, Washington, D
 # Lab 2 – Variable Types and Factor Levels
 
 ```{r, message = FALSE}
-day <- read_csv("day.csv")
-hour <- read_csv("hour.csv")
+#the csv files are either next to this file or in the dataset folder (like in the GitHub repo)
+data_folder <- if (file.exists("day.csv")) "." else "bike+sharing+dataset (1)"
+day <- read_csv(file.path(data_folder, "day.csv"))
+hour <- read_csv(file.path(data_folder, "hour.csv"))
 
 dim(day)
 str(day)

@@ -483,6 +483,7 @@ A **sidebar menu** opens one part of the dashboard at a time, so there is no lon
 | `ProjectProposal.pdf` | The project proposal |
 | `DataSources.docx` | Section 2 (data sources, data directory, references) as a Word document |
 | `AnalysisPlan.docx` | Task outline and analysis plan: research questions, data preparation, Tasks 1–10 and the lab application table |
+| `BikeShare_Analysis.Rmd` | The analysis in R (R Markdown), applying six course labs (Labs 2, 3, 5, 6, 7 and 9) to the dataset. Open it in RStudio and click **Knit** |
 
 ---
 
