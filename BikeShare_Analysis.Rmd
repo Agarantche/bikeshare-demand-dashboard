@@ -33,10 +33,10 @@ day$season <- factor(day$season, levels = 1:4, labels = c("Winter", "Spring", "S
 day$weather <- factor(day$weathersit, levels = 1:3, labels = c("Clear", "Mist/cloudy", "Rain/snow"))
 day$year <- factor(day$yr, levels = 0:1, labels = c("2011", "2012"))
 
-#temperature and humidity are stored from 0 to 1, so put them back in real units
-day$temp_c <- day$temp * 41
+#temperature, humidity and wind are stored from 0 to 1, so put them back in real units (°F, % and mph)
+day$temp_f <- day$temp * 41 * 9 / 5 + 32
 day$humidity <- day$hum * 100
-day$wind_kmh <- day$windspeed * 67
+day$wind_mph <- day$windspeed * 67 * 0.621371
 
 class(day$season)
 levels(day$season)
@@ -77,10 +77,10 @@ ggplot(hour, aes(x = cnt)) +
 # Lab 5 – Relationships Between Two Numerical Variables
 
 ```{r, message = FALSE}
-ggplot(day, aes(x = temp_c, y = cnt)) +
+ggplot(day, aes(x = temp_f, y = cnt)) +
   geom_point(alpha = 0.3, color = "steelblue") +
   geom_smooth(color = "red") +
-  labs(title = "Temperature vs daily rentals", x = "Temperature (°C)", y = "Rentals per day")
+  labs(title = "Temperature vs daily rentals", x = "Temperature (°F)", y = "Rentals per day")
 
 ggplot(day, aes(x = humidity, y = cnt)) +
   geom_point(alpha = 0.3, color = "steelblue") +
@@ -107,9 +107,9 @@ ggplot(day, aes(x = weather, y = cnt)) +
   labs(title = "Daily rentals by weather", x = "Weather", y = "Rentals per day")
 
 #temperature might explain the season differences
-ggplot(day, aes(x = season, y = temp_c)) +
+ggplot(day, aes(x = season, y = temp_f)) +
   geom_boxplot(fill = "lightblue") +
-  labs(title = "Temperature by season", x = "Season", y = "Temperature (°C)")
+  labs(title = "Temperature by season", x = "Season", y = "Temperature (°F)")
 ```
 
 **Interpretation:** Winter has the lowest median (2,209 rentals a day) and Summer the highest (5,354). Rain or snow days average about 63% fewer rentals than clear days. The last boxplot shows that Winter is much colder than the other seasons, so part of the low Winter numbers comes from temperature, not just the season.
@@ -139,11 +139,11 @@ ggplot(day, aes(x = season, fill = weather)) +
 # Lab 9 – Correlation Analysis
 
 ```{r}
-cor(day$temp_c, day$cnt)
+cor(day$temp_f, day$cnt)
 cor(day$humidity, day$cnt)
 
 #correlation matrix
-round(cor(day[, c("temp_c", "humidity", "wind_kmh", "casual", "registered", "cnt")]), 2)
+round(cor(day[, c("temp_f", "humidity", "wind_mph", "casual", "registered", "cnt")]), 2)
 ```
 
 **Interpretation:** temperature and rentals have a moderate positive correlation (about 0.63). Humidity (about −0.10) and wind speed (about −0.23) have weak negative correlations. Registered rentals are very strongly correlated with total rentals because most riders are registered. A correlation does not prove that temperature causes more rentals, because other things like daylight and school breaks also change with the seasons.

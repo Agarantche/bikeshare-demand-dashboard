@@ -16,7 +16,7 @@ export function render(v, el) {
   //weather: rain or snow vs clear days, and how closely temperature goes with rentals
   const avg = (w) => mean(days.filter((d) => d.weather === w), (d) => d.cnt);
   const rain = avg("Rain/snow") / avg("Clear") - 1;
-  const r = corr(days.map((d) => d.temp_c), days.map((d) => d.cnt));
+  const r = corr(days.map((d) => d.temp_f), days.map((d) => d.cnt));
   //disruptions: days far below what the model expected
   const disrupted = days.filter((d) => d.cnt / d.expected_cnt - 1 <= DISRUPTED).length;
   //riders: share of rentals by registered members

@@ -26,11 +26,12 @@ def clean(df):
     df.loc[df["workingday"] == 1, "day_type"] = "Working day"
     df.loc[df["holiday"] == 1, "day_type"] = "Holiday"
 
-    #the dataset stores these as 0-1, multiplying by their max puts them back in real units
-    df["temp_c"] = df["temp"] * 41
-    df["feels_like_c"] = df["atemp"] * 50
+    #the dataset stores these as 0-1, multiplying by their max puts them back in real units (celsius and km/h)
+    #then temperature goes to fahrenheit and wind to mph, since thats what people in the us are used to
+    df["temp_f"] = df["temp"] * 41 * 9 / 5 + 32
+    df["feels_like_f"] = df["atemp"] * 50 * 9 / 5 + 32
     df["humidity"] = df["hum"] * 100
-    df["wind"] = df["windspeed"] * 67
+    df["wind"] = df["windspeed"] * 67 * 0.621371  #mph
 
     #drops the old columns that got replaced
     return df.drop(columns=["instant", "yr", "weathersit", "temp", "atemp", "hum", "windspeed"])

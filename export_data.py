@@ -15,10 +15,10 @@ def main():
     day["date"] = day["dteday"].dt.strftime("%Y-%m-%d")
 
     #one row per day with everything the website needs, numbers rounded so the file stays small
-    cols = ["date", "year", "mnth", "season", "weekday", "day_type", "weather", "temp_c", "feels_like_c", "humidity",
+    cols = ["date", "year", "mnth", "season", "weekday", "day_type", "weather", "temp_f", "feels_like_f", "humidity",
             "wind", "cnt", "registered", "casual", "expected_cnt", "expected_registered", "expected_casual", "event"]
     days = day[cols].copy()
-    for c in ["temp_c", "feels_like_c", "humidity", "wind"]:
+    for c in ["temp_f", "feels_like_f", "humidity", "wind"]:
         days[c] = days[c].round(1)
     for c in ["expected_cnt", "expected_registered", "expected_casual"]:
         days[c] = days[c].round(0).astype(int)

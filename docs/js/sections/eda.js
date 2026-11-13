@@ -13,7 +13,7 @@ import { C } from "../theme.js";
 import { corr, cut, histogram, kde, median, percentile, skew } from "../stats.js";
 
 //the buttons picked in this section, kept while the filters change
-const opt = { unit: "day", bins: "30", scale: "normal", cat: "weather", order: "natural", show: "count", x: "temp_c", alpha: "see",
+const opt = { unit: "day", bins: "30", scale: "normal", cat: "weather", order: "natural", show: "count", x: "temp_f", alpha: "see",
   trend: "loess", ylog: "normal", group: "season", kind: "box", pct: "count", bars: "stacked", fill: "count" };
 
 //categorical variables with their levels in natural order, filter is the dashboard filter a bar click turns on
@@ -25,13 +25,13 @@ const CATS = {
 };
 
 //numerical weather variables for the scatterplot
-const NUMS = { temp_c: "Temperature (°C)", feels_like_c: "Feels-like temperature (°C)", humidity: "Humidity (%)", wind: "Wind speed (km/h)" };
+const NUMS = { temp_f: "Temperature (°F)", feels_like_f: "Feels-like temperature (°F)", humidity: "Humidity (%)", wind: "Wind speed (mph)" };
 
 //demand level made from rentals (thirds of the days in view), an ordered category
 const DEMAND = ["Low", "Medium", "High"];
 
 //variables in the correlation matrix
-const CORR_VARS = [["temp_c", "Temperature"], ["feels_like_c", "Feels-like"], ["humidity", "Humidity"], ["wind", "Wind"],
+const CORR_VARS = [["temp_f", "Temperature"], ["feels_like_f", "Feels-like"], ["humidity", "Humidity"], ["wind", "Wind"],
   ["casual", "Casual"], ["registered", "Registered"], ["cnt", "All rentals"]];
 
 //the lab that was open last time (for the highlighter swipe on the lab buttons)
@@ -107,7 +107,7 @@ export function render(v, el) {
   if (!d.length) { el.innerHTML = ""; return Promise.resolve(); }
   const who = state.rider === "all" ? "all" : RIDERS[state.rider].toLowerCase();
   const yLabel = "Rentals per day" + (state.rider === "all" ? "" : ` (${who})`);
-  const rows = d.map((x) => ({ date: x.date, act: x.act, temp_c: x.temp_c, feels_like_c: x.feels_like_c, humidity: x.humidity, wind: x.wind,
+  const rows = d.map((x) => ({ date: x.date, act: x.act, temp_f: x.temp_f, feels_like_f: x.feels_like_f, humidity: x.humidity, wind: x.wind,
     season: x.season, weather: x.weather, day_type: x.day_type, weekday: x.weekday }));
   const acts = d.map((x) => x.act);
   //hours that exist in hour.csv (missing hours are 0, but every real hour has at least 1 rental)
@@ -138,8 +138,8 @@ export function render(v, el) {
   const cell = (s, w) => two.find((t) => t.season === s && t.weather === w);
 
   //temperature cut into 5 equal-width groups and the demand level of each day (task 7)
-  const { groups: tg, edges } = cut(d.map((x) => x.temp_c), 5);
-  const tLabels = edges.slice(0, -1).map((e, i) => `${e.toFixed(1)}–${edges[i + 1].toFixed(1)}°C`);
+  const { groups: tg, edges } = cut(d.map((x) => x.temp_f), 5);
+  const tLabels = edges.slice(0, -1).map((e, i) => `${Math.round(e)}–${Math.round(edges[i + 1])}°F`);
   const t1 = percentile(acts, 100 / 3), t2 = percentile(acts, 200 / 3);
   const level = (a) => (a <= t1 ? "Low" : a <= t2 ? "Medium" : "High");
   const binned = tLabels.map((lab, gi) => {
@@ -169,11 +169,11 @@ export function render(v, el) {
     ["<code>day_type</code> (made here)", "Categorical, not ordered", "Made from holiday and workingday", "Working day, Weekend, Holiday"],
     ["<code>year</code>", "Categorical (2 levels)", "Number 0–1", "2011, 2012"],
     ["<code>hr</code>", "Numerical, discrete", "Number 0–23", "Hour of the day"],
-    ["<code>temp_c</code>, <code>feels_like_c</code>", "Numerical, continuous", "Scaled 0–1 (× 41 and × 50)", "°C"],
-    ["<code>humidity</code>, <code>wind</code>", "Numerical, continuous", "Scaled 0–1 (× 100 and × 67)", "%, km/h"],
+    ["<code>temp_f</code>, <code>feels_like_f</code>", "Numerical, continuous", "Scaled 0–1, converted to Fahrenheit", "°F"],
+    ["<code>humidity</code>, <code>wind</code>", "Numerical, continuous", "Scaled 0–1, converted to percent and mph", "%, mph"],
     ["<code>cnt</code>, <code>registered</code>, <code>casual</code>", "Numerical, discrete counts", "Whole number", "Rentals"],
     ["<code>demand</code> (made here)", "Categorical, ordered", "Made from rentals, cut into thirds", "Low &lt; Medium &lt; High"],
-    ["<code>temp_group</code> (made here)", "Categorical, ordered", "Made from temp_c with cut(temp_c, 5)", "5 equal-width ranges"]],
+    ["<code>temp_group</code> (made here)", "Categorical, ordered", "Made from temp_f with cut(temp_f, 5)", "5 equal-width ranges"]],
     "Table 4. Variable types, how the file stores them, and their levels.");
 
   const statRow = (label, vals) => [label, fint(Math.min(...vals)), fint(percentile(vals, 25)), fint(median(vals)),
@@ -183,12 +183,12 @@ export function render(v, el) {
 
   const seasonGroups = SEASONS.map((s) => d.filter((x) => x.season === s)).filter((gr) => gr.length);
   const t11 = table(["Days", "Days in view", "r (temperature, rentals)", "Strength"],
-    [["All days in view", d.length, sign(rWith("temp_c"), 2), strength(rWith("temp_c"))],
-      ...seasonGroups.map((gr) => { const r = corr(gr.map((x) => x.temp_c), gr.map((x) => x.act)); return [gr[0].season, gr.length, sign(r, 2), strength(r)]; })],
+    [["All days in view", d.length, sign(rWith("temp_f"), 2), strength(rWith("temp_f"))],
+      ...seasonGroups.map((gr) => { const r = corr(gr.map((x) => x.temp_f), gr.map((x) => x.act)); return [gr[0].season, gr.length, sign(r, 2), strength(r)]; })],
     "Table 10. Correlation between temperature and daily rentals, overall and within each season.");
 
   const medTemp = {};
-  for (const gr of seasonGroups) medTemp[gr[0].season] = median(gr.map((x) => x.temp_c));
+  for (const gr of seasonGroups) medTemp[gr[0].season] = median(gr.map((x) => x.temp_f));
 
   //---------- the page: lab buttons, then only the open part ----------
   const n = state.lab, [, lab, , , title] = LABS[n - 1];
@@ -213,7 +213,7 @@ export function render(v, el) {
     3: () => `<div class="ctl">${seg("cat", "Variable", [["weather", "Weather"], ["season", "Season"], ["day_type", "Day type"], ["weekday", "Weekday"]])}${seg("order", "Order", [["natural", "Natural"], ["freq", "By frequency"]])}${seg("show", "Show", [["count", "Counts"], ["pct", "Percent"]])}</div>
       <div class="grid2"><div id="t7"></div><div><div class="chart" id="f4" style="min-height:230px"></div><p class="cap">Figure 4. Bar chart of days in each category.</p></div></div>
       ${more(`<p class="interp" id="n3"></p>`)}`,
-    4: () => `<div class="ctl">${seg("x", "X axis", [["temp_c", "Temperature"], ["feels_like_c", "Feels-like"], ["humidity", "Humidity"], ["wind", "Wind"]])}${seg("alpha", "Points", [["solid", "Solid"], ["see", "See-through"]])}${seg("trend", "Trend", [["loess", "Smooth"], ["linear", "Straight"], ["none", "None"]])}${seg("ylog", "Y axis", [["normal", "Normal"], ["log", "Log scale"]])}</div>
+    4: () => `<div class="ctl">${seg("x", "X axis", [["temp_f", "Temperature"], ["feels_like_f", "Feels-like"], ["humidity", "Humidity"], ["wind", "Wind"]])}${seg("alpha", "Points", [["solid", "Solid"], ["see", "See-through"]])}${seg("trend", "Trend", [["loess", "Smooth"], ["linear", "Straight"], ["none", "None"]])}${seg("ylog", "Y axis", [["normal", "Normal"], ["log", "Log scale"]])}</div>
       <div class="chart" id="f5" style="min-height:360px"></div><p class="cap">Figure 5. Scatterplot of a weather measure and daily rentals.</p>
       ${more(`<p class="interp" id="n4"></p>`)}`,
     5: () => `<div class="ctl">${seg("group", "Group by", [["season", "Season"], ["weather", "Weather"], ["day_type", "Day type"]])}${seg("kind", "Chart", [["box", "Boxplot"], ["violin", "Violin"], ["jitter", "Jittered points"], ["means", "Bar of means"]])}</div>
@@ -221,12 +221,12 @@ export function render(v, el) {
       <div class="grid2"><div id="t8"></div><div><div class="chart" id="f7" style="min-height:300px"></div><p class="cap">Figure 7. Daily temperature by season.</p></div></div>
       ${more(`<p class="interp" id="n5"></p><p class="interp">Lab 6 warned that a difference between groups does not prove the group causes it, because another
         variable can be behind it (for diamonds, carat explained why Fair cuts cost more). Here temperature plays that role` + (medTemp.Winter != null && medTemp.Summer != null
-        ? `: the median Winter day is about ${Math.round(medTemp.Winter)}°C, compared with ${Math.round(medTemp.Summer)}°C in Summer (Figure 7).` : ".") +
+        ? `: the median Winter day is about ${Math.round(medTemp.Winter)}°F, compared with ${Math.round(medTemp.Summer)}°F in Summer (Figure 7).` : ".") +
         ` Since warmer days have more rentals (4.4), colder temperatures explain much of why Winter is slow. Part 4.8 checks this within each season.</p>`)}`,
     6: () => `<div class="ctl">${seg("pct", "Table", [["count", "Counts"], ["row", "Row %"], ["col", "Column %"]])}${seg("bars", "Chart", [["grouped", "Grouped"], ["stacked", "Stacked"], ["fill", "100% stacked"], ["heat", "Heatmap"]])}</div>
       <div class="grid2"><div id="t9"></div><div><div class="chart" id="f8" style="min-height:300px"></div><p class="cap">Figure 8. Weather by season.</p></div></div>
       ${more(`<p class="interp" id="n6"></p>`)}`,
-    7: () => `<p class="note">Temperature is cut into 5 groups of equal width, like R's <code>cut(temp_c, 5)</code>. Demand level: <b>Low</b> (up to
+    7: () => `<p class="note">Temperature is cut into 5 groups of equal width, like R's <code>cut(temp_f, 5)</code>. Demand level: <b>Low</b> (up to
       ${fint(t1)} rentals), <b>Medium</b> (up to ${fint(t2)}) and <b>High</b> (above ${fint(t2)}), the lowest, middle and highest third of the days in view.</p>
       <div class="ctl">${seg("fill", "Bars", [["count", "Counts"], ["fill", "Proportions"]])}</div>
       <div class="grid2"><div>${table(["Temperature group", "Days", "Low", "Medium", "High"],
@@ -352,7 +352,7 @@ export function render(v, el) {
       if (opt.trend !== "none") layer.push({ transform: [opt.trend === "loess" ? { loess: "act", on: xf, bandwidth: 0.4 } : { regression: "act", on: xf }],
         mark: { type: "line", color: C.ORANGE, strokeWidth: 3 }, encoding: enc });
       //a handwritten note in the empty top right corner, where the hottest days fall short (only true with every day in view)
-      if (!v.anyFilter && (xf === "temp_c" || xf === "feels_like_c")) layer.push({
+      if (!v.anyFilter && (xf === "temp_f" || xf === "feels_like_f")) layer.push({
         data: { values: [{ x: Math.max(...data.map((p) => p[xf])), y: Math.max(...data.map((p) => p.act)), text: "too hot to ride? ↓" }] },
         mark: { type: "text", ...hand(21), align: "right", baseline: "top" },
         encoding: { x: { field: "x", type: "quantitative", scale: { zero: false } }, y: { field: "y", type: "quantitative" }, text: { field: "text" } } });
@@ -365,7 +365,7 @@ export function render(v, el) {
       const rs = Object.keys(NUMS).map((k) => [k, rWith(k)]).filter(([, r]) => !Number.isNaN(r));
       const best = rs.reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a)), worst = rs.reduce((a, b) => (Math.abs(b[1]) < Math.abs(a[1]) ? b : a));
       const name = (k) => NUMS[k].replace(/ \(.*/, "").toLowerCase();
-      const r = rWith(opt.x), temp = opt.x === "temp_c" || opt.x === "feels_like_c";
+      const r = rWith(opt.x), temp = opt.x === "temp_f" || opt.x === "feels_like_f";
       g("k").innerHTML = `<b>${strength(r)[0].toUpperCase() + strength(r).slice(1)}</b> relationship between ${name(opt.x)} and rentals (r = ${sign(r, 2)})` +
         (temp ? ": warmer days are busier, up to a point." : ": on its own it says little about rentals.");
       g("n4").innerHTML = "Each point is one day. " +
@@ -545,10 +545,10 @@ export function render(v, el) {
 
   //---------- 4.8: correlation text and the charts that don't change with the buttons ----------
   const names = CORR_VARS.map(([, l]) => l);
-  const weather = ["temp_c", "feels_like_c", "humidity", "wind"].map((k) => ({ k, l: CORR_VARS.find(([kk]) => kk === k)[1].toLowerCase(), r: rWith(k) })).filter((x) => !Number.isNaN(x.r));
+  const weather = ["temp_f", "feels_like_f", "humidity", "wind"].map((k) => ({ k, l: CORR_VARS.find(([kk]) => kk === k)[1].toLowerCase(), r: rWith(k) })).filter((x) => !Number.isNaN(x.r));
   const wBest = weather.length ? weather.reduce((a, b) => (Math.abs(b.r) > Math.abs(a.r) ? b : a)) : null;
   Object.assign(parts, {
-    f7: () => draw(g("f7"), { height: 230, ...titled(boxplot(rows, "season", SEASONS, "temp_c", "Temperature (°C)", "Season"), "The Seasons Have Very Different Temperatures", "Daily temperature by season") }),
+    f7: () => draw(g("f7"), { height: 230, ...titled(boxplot(rows, "season", SEASONS, "temp_f", "Temperature (°F)", "Season"), "The Seasons Have Very Different Temperatures", "Daily temperature by season") }),
     f10: () => draw(g("f10"), { height: 290, data: { values: cm },
       title: { text: wBest ? `${CORR_VARS.find(([k]) => k === wBest.k)[1]} Has the Strongest Link to Rentals` : "Correlation Matrix", subtitle: "Red = positive, gray = negative, the closer to 0 the fainter" },
       encoding: { x: { field: "a", type: "nominal", sort: names, title: null, axis: { labelAngle: -35 } }, y: { field: "b", type: "nominal", sort: names, title: null } },
@@ -563,9 +563,9 @@ export function render(v, el) {
         facet: { column: { field: "season", type: "nominal", sort: SEASONS, title: null } },
         spec: { width: panelW, height: 190, layer: [
           { mark: { type: "circle", size: 18, color: C.BLUE, opacity: 0.4 },
-            encoding: { x: { field: "temp_c", type: "quantitative", title: "Temperature (°C)" }, y: { field: "act", type: "quantitative", title: yLabel, axis: { format: ",.0f" } } } },
-          { transform: [{ loess: "act", on: "temp_c", groupby: ["season"], bandwidth: 0.6 }], mark: { type: "line", color: C.ORANGE, strokeWidth: 3 },
-            encoding: { x: { field: "temp_c", type: "quantitative" }, y: { field: "act", type: "quantitative" } } }] } });
+            encoding: { x: { field: "temp_f", type: "quantitative", title: "Temperature (°F)" }, y: { field: "act", type: "quantitative", title: yLabel, axis: { format: ",.0f" } } } },
+          { transform: [{ loess: "act", on: "temp_f", groupby: ["season"], bandwidth: 0.6 }], mark: { type: "line", color: C.ORANGE, strokeWidth: 3 },
+            encoding: { x: { field: "temp_f", type: "quantitative" }, y: { field: "act", type: "quantitative" } } }] } });
     },
     n8: () => {
       const off = cm.filter((x) => names.indexOf(x.a) < names.indexOf(x.b) && !Number.isNaN(x.r));
@@ -573,9 +573,9 @@ export function render(v, el) {
       const strongest = off.reduce((a, b) => (Math.abs(b.r) > Math.abs(a.r) ? b : a));
       const negative = off.reduce((a, b) => (b.r < a.r ? b : a));
       const wZero = weather.reduce((a, b) => (Math.abs(b.r) < Math.abs(a.r) ? b : a));
-      const inSeason = seasonGroups.map((gr) => ({ s: gr[0].season, r: corr(gr.map((x) => x.temp_c), gr.map((x) => x.act)) })).filter((x) => !Number.isNaN(x.r));
+      const inSeason = seasonGroups.map((gr) => ({ s: gr[0].season, r: corr(gr.map((x) => x.temp_f), gr.map((x) => x.act)) })).filter((x) => !Number.isNaN(x.r));
       const hiS = inSeason.length ? inSeason.reduce((a, b) => (b.r > a.r ? b : a)) : null, loS = inSeason.length ? inSeason.reduce((a, b) => (b.r < a.r ? b : a)) : null;
-      const why = (x) => (x.ka === "temp_c" && x.kb === "feels_like_c" ? "they measure nearly the same thing, like a diamond's x, y and z"
+      const why = (x) => (x.ka === "temp_f" && x.kb === "feels_like_f" ? "they measure nearly the same thing, like a diamond's x, y and z"
         : x.kb === "cnt" && (x.ka === "registered" || x.ka === "casual") ? "all rentals include these rentals, so they rise together by construction" : "these two move together most closely");
       g("k").innerHTML = `<b>${cap1(wBest.l)}</b> goes with rentals most closely (r = ${sign(wBest.r, 2)}, ${strength(wBest.r)})` +
         (inSeason.length > 1 ? `, but the link changes by season: from r = ${sign(hiS.r, 2)} in ${hiS.s} to ${sign(loS.r, 2)} in ${loS.s}.` : ".");

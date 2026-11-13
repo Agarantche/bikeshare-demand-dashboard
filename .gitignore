@@ -2,5 +2,8 @@
 __pycache__/
 *.pyc
 
+# Lock files Office makes while a document is open
+~$*
+
 # Saved model results (rebuilt automatically on first run)
 model_cache/

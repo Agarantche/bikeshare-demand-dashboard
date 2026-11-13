@@ -31,7 +31,7 @@ export function render(v, el) {
 function dailySpec(v, widthPx) {
   //every day goes on the chart, the filter only fades the line and adds dots
   const D = v.all.map((d) => ({ date: d.date, dt: noon(d.date), act: d.act, exp: d.exp, gap: d.gap, weather: d.weather,
-    temp: d.temp_c, day_type: d.day_type, event: d.event, year: d.year, inView: d.inView }));
+    temp: d.temp_f, day_type: d.day_type, event: d.event, year: d.year, inView: d.inView }));
   const ymax = Math.max(...D.map((d) => Math.max(d.act, d.exp))); //highest point on the chart
   const lanes = [ymax * 1.30, ymax * 1.19, ymax * 1.08]; //3 rows of labels above the lines
   const yScale = { domain: [0, ymax * 1.33] }; //extra room at the top for the labels
@@ -115,7 +115,7 @@ function dailySpec(v, widthPx) {
     encoding: { x, opacity: { condition: { param: "hover", empty: false, value: 1 }, value: 0 },
       tooltip: [{ field: "dt", type: "temporal", title: "Date", format: "%a %b %d, %Y" }, { field: "event", title: "Event" },
         { field: "act", type: "quantitative", title: "Actual", format: ",.0f" }, { field: "exp", type: "quantitative", title: "Expected", format: ",.0f" },
-        { field: "weather", title: "Weather" }, { field: "temp", type: "quantitative", title: "Temp (°C)", format: ".0f" },
+        { field: "weather", title: "Weather" }, { field: "temp", type: "quantitative", title: "Temp (°F)", format: ".0f" },
         { field: "day_type", title: "Day type" }] } });
   return { height: 320, layer: layers };
 }
@@ -143,8 +143,8 @@ function renderDay(v, el) {
 
   //compares temperature and humidity with the rest of that month
   const month = days.filter((d) => d.year === o.year && d.mnth === o.mnth);
-  const mt = mean(month, (d) => d.temp_c), mh = mean(month, (d) => d.humidity);
-  const tempWord = o.temp_c > mt + 3 ? "warm for the month" : o.temp_c < mt - 3 ? "cold for the month" : "normal for the month";
+  const mt = mean(month, (d) => d.temp_f), mh = mean(month, (d) => d.humidity);
+  const tempWord = o.temp_f > mt + 5 ? "warm for the month" : o.temp_f < mt - 5 ? "cold for the month" : "normal for the month";
   const humWord = o.humidity > mh + 12 ? "more humid than usual" : o.humidity < mh - 12 ? "drier than usual" : "usual for the month";
   const allGap = o.cnt / o.expected_cnt - 1;
   const gapColor = allGap < -0.15 ? "var(--bad)" : allGap > 0.15 ? "var(--ok)" : "var(--fg)";
@@ -165,8 +165,8 @@ function renderDay(v, el) {
       <div class="stat"><span class="stat-l">Registered</span><span class="stat-v">${fint(o.registered)}</span><span class="stat-s">expected ${fint(o.expected_registered)}</span></div>
       <div class="stat"><span class="stat-l">Casual</span><span class="stat-v">${fint(o.casual)}</span><span class="stat-s">expected ${fint(o.expected_casual)}</span></div>
       <div class="stat"><span class="stat-l">Weather</span><span class="stat-v" style="font-size:16px">${o.weather}</span>
-        <span class="stat-s">${o.temp_c.toFixed(1)}°C (feels ${o.feels_like_c.toFixed(1)}°C) · ${tempWord}</span></div>
-      <div class="stat"><span class="stat-l">Humidity · wind</span><span class="stat-v" style="font-size:16px">${Math.round(o.humidity)}% · ${o.wind.toFixed(1)} km/h</span>
+        <span class="stat-s">${Math.round(o.temp_f)}°F (feels ${Math.round(o.feels_like_f)}°F) · ${tempWord}</span></div>
+      <div class="stat"><span class="stat-l">Humidity · wind</span><span class="stat-v" style="font-size:16px">${Math.round(o.humidity)}% · ${Math.round(o.wind)} mph</span>
         <span class="stat-s">${humWord}</span></div>
     </div>
     ${legend([[C.BLUE, `This day (${riderWord} riders)`, "sq"], [C.GRAY, `Typical ${MONTHS[o.mnth - 1]} ${o.year} ${t}`, "ln"]])}

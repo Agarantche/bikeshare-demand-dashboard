@@ -98,7 +98,7 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 | `casual` | Numerical | Response (by rider type) | Rentals by casual (non-member) users |
 | `hr` | Numerical (0–23) | Primary explanatory | Hour of the day (`hour.csv` only) |
 | `season` | Categorical | Primary explanatory | Season, relabeled by date as Winter, Spring, Summer, Fall* |
-| `temp` | Numerical | Primary explanatory | Temperature, normalized (× 41 = °C) |
+| `temp` | Numerical | Primary explanatory | Temperature, normalized (× 41 = °C, then converted to °F) |
 | `weathersit` | Categorical | Primary explanatory | 1 = Clear, 2 = Mist/cloudy, 3 = Light rain/snow, 4 = Heavy rain/snow |
 | `workingday` | Binary | Primary explanatory | 1 if the day is neither a weekend nor a holiday |
 | `holiday` | Binary | Supporting | 1 if the day is a public holiday |
@@ -106,9 +106,9 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 | `dteday` | Date | Supporting | Date |
 | `yr` | Categorical | Supporting | Year (0 = 2011, 1 = 2012) |
 | `mnth` | Numerical (1–12) | Supporting | Month |
-| `atemp` | Numerical | Supporting | Feels-like temperature, normalized (× 50 = °C) |
+| `atemp` | Numerical | Supporting | Feels-like temperature, normalized (× 50 = °C, then converted to °F) |
 | `hum` | Numerical | Supporting | Humidity, normalized (× 100 = %) |
-| `windspeed` | Numerical | Supporting | Wind speed, normalized (× 67 = km/h) |
+| `windspeed` | Numerical | Supporting | Wind speed, normalized (× 67 = km/h, then converted to mph) |
 | `instant` | Numerical | Not used | Record index |
 
 \* The dataset's documentation lists season 1 as spring, but the dates show that code 1 covers December 21 – March 20, so each code was relabeled to the season its dates fall in.
@@ -120,7 +120,7 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 Both files were loaded with pandas and checked for size, variable types, missing values and duplicates before analysis (`prep.py`). The original rental counts were kept, because their units are meaningful for business interpretation. The following changes were made:
 
 - Codes were replaced with labels (season, weather, year, weekday), and the season labels were corrected by date.
-- Temperature, feels-like temperature, humidity and wind speed were converted from the 0–1 scale back to real units (°C, %, km/h).
+- Temperature, feels-like temperature, humidity and wind speed were converted from the 0–1 scale back to real units, with temperature in °F and wind speed in mph, the units most U.S. readers use.
 - A `day_type` variable (Working day, Weekend, Holiday) was created, because the original `workingday` flag groups weekends and holidays together.
 - Weather category 4 (heavy rain, only 3 hours in the data) was merged into Rain/snow.
 - A log scale was used for selected displays of hourly rentals, where the values are strongly right-skewed.
@@ -153,7 +153,7 @@ Every table and figure below is in the dashboard's **Section 4: Exploratory data
 | 5.4 | Task 4 | Lab 5 | Scatterplot with transparency, smooth or straight trend line, log scale |
 | 5.5 | Task 5 | Lab 6 | Grouped summaries, boxplot, violin, jittered points, bar of means, a confounder |
 | 5.6 | Task 6 | Lab 7 | Two-way table, row and column percentages, grouped/stacked/100% bars, heatmap |
-| 5.7 | Task 7 | Lab 8 | `cut(temp_c, 5)` vs demand level, count and proportional bars |
+| 5.7 | Task 7 | Lab 8 | `cut(temp_f, 5)` vs demand level, count and proportional bars |
 | 5.8 | Task 8 | Lab 9 | Correlation matrix, correlation within each season, limits of r |
 
 Tasks 9 and 10 of the plan (rentals by hour and day type, and casual vs registered riders) are dashboard Sections 1 and 3.
@@ -172,11 +172,11 @@ The data has 731 days and 17,379 hours. The primary response variable is the num
 | `day_type` (made here) | Categorical, not ordered | Made from `holiday` and `workingday` | Working day, Weekend, Holiday |
 | `year` | Categorical (2 levels) | Number 0–1 | 2011, 2012 |
 | `hr` | Numerical, discrete | Number 0–23 | Hour of the day |
-| `temp_c`, `feels_like_c` | Numerical, continuous | Scaled 0–1 (× 41 and × 50) | °C |
-| `humidity`, `wind` | Numerical, continuous | Scaled 0–1 (× 100 and × 67) | %, km/h |
+| `temp_f`, `feels_like_f` | Numerical, continuous | Scaled 0–1, converted to Fahrenheit | °F |
+| `humidity`, `wind` | Numerical, continuous | Scaled 0–1, converted to percent and mph | %, mph |
 | `cnt`, `registered`, `casual` | Numerical, discrete counts | Whole number | Rentals |
 | `demand` (made here) | Categorical, ordered | Rentals cut into thirds | Low < Medium < High |
-| `temp_group` (made here) | Categorical, ordered | `cut(temp_c, 5)` | 5 equal-width ranges |
+| `temp_group` (made here) | Categorical, ordered | `cut(temp_f, 5)` | 5 equal-width ranges |
 
 The order of the levels matters: weather has a real order from good to bad, but day type does not, since a weekend is not "more" than a holiday.
 
@@ -221,10 +221,10 @@ In the scatterplot of temperature and daily rentals (**Figure 5**), each point i
 
 | Measure | Correlation with daily rentals (r) | Strength |
 |---|---|---|
-| Temperature (°C) | +0.63 | Moderate positive |
-| Feels-like temperature (°C) | +0.63 | Moderate positive |
+| Temperature (°F) | +0.63 | Moderate positive |
+| Feels-like temperature (°F) | +0.63 | Moderate positive |
 | Humidity (%) | −0.10 | Very weak |
-| Wind speed (km/h) | −0.23 | Weak negative |
+| Wind speed (mph) | −0.23 | Weak negative |
 
 Rentals rise as it gets warmer, but the relationship is not perfectly linear: the smooth line flattens and dips on the hottest days, and days at the same temperature still vary a lot. Compared with the straight-line fit, the smooth line shows where a straight line misses. Humidity and wind form wide clouds with only a slight slope, so on their own they say little about rentals, like depth vs price for the diamonds in Lab 5.
 
@@ -247,7 +247,7 @@ Rentals rise as it gets warmer, but the relationship is not perfectly linear: th
 
 Summer has the highest median and Winter by far the lowest (**Figure 6**). In Winter the mean is well above the median, a sign of right skew within the season. By weather, mean rentals drop 17% from clear to mist/cloudy days and 63% on rain/snow days. Holidays have the lowest median and the widest spread, but only 21 days. The dashboard shows Figure 6 as a boxplot (medians, IQR, outliers), a violin plot (the shape), jittered points (every day) or a bar of means. The bar of means is the easiest to read but hides the spread, which is why the other three are better.
 
-It would be easy to conclude that the season itself drives demand, but Lab 6 showed that a third variable can be behind a group difference (for diamonds, carat explained why Fair cuts cost more). Here that variable is temperature: the median Winter day is about 12°C, compared with 29°C in Summer (**Figure 7**).
+It would be easy to conclude that the season itself drives demand, but Lab 6 showed that a third variable can be behind a group difference (for diamonds, carat explained why Fair cuts cost more). Here that variable is temperature: the median Winter day is about 53°F, compared with 85°F in Summer (**Figure 7**).
 
 ### 5.6 Two Categorical Variables: Season and Weather
 
@@ -265,19 +265,19 @@ Summer has the most clear days (72%) and Fall the fewest (58%) (**Figure 8**). T
 
 ### 5.7 Temperature Groups and Demand Level
 
-Temperature was cut into 5 equal-width groups (`cut(temp_c, 5)`), and each day was given a demand level from its rentals: Low (up to 3,741), Medium (up to 5,312) and High (above 5,312), the lowest, middle and highest third of the days.
+Temperature was cut into 5 equal-width groups (`cut(temp_f, 5)`), and each day was given a demand level from its rentals: Low (up to 3,741), Medium (up to 5,312) and High (above 5,312), the lowest, middle and highest third of the days.
 
 *Table 9. Demand level by temperature group (row percentages, each row adds to 100%).*
 
 | Temperature group | Days | Low | Medium | High |
 |---|---|---|---|---|
-| 2.4–9.0°C | 42 | 100% | 0% | 0% |
-| 9.0–15.6°C | 194 | 66% | 24% | 10% |
-| 15.6–22.1°C | 174 | 30% | 37% | 33% |
-| 22.1–28.7°C | 194 | 8% | 41% | 51% |
-| 28.7–35.3°C | 127 | 3% | 43% | 54% |
+| 36–48°F | 43 | 100% | 0% | 0% |
+| 48–60°F | 194 | 66% | 24% | 10% |
+| 60–72°F | 175 | 30% | 37% | 34% |
+| 72–84°F | 192 | 8% | 41% | 51% |
+| 84–96°F | 127 | 3% | 43% | 54% |
 
-High-demand days get more common as it warms up: none of the coldest days are high-demand, compared with 54% of the hottest (**Figure 9**). The rise slows between the two warmest groups, matching the flattening in Figure 5. The count chart shows that the coldest group has only 42 days, while the proportional chart makes the mix easy to compare but hides group size, so the two are read together.
+High-demand days get more common as it warms up: none of the coldest days are high-demand, compared with 54% of the hottest (**Figure 9**). The rise slows between the two warmest groups, matching the flattening in Figure 5. The count chart shows that the coldest group has only 43 days, while the proportional chart makes the mix easy to compare but hides group size, so the two are read together.
 
 ### 5.8 Correlation: How Strong Are the Relationships?
 
@@ -365,9 +365,9 @@ day.loc[day["workingday"] == 1, "day_type"] = "Working day"
 day.loc[day["holiday"] == 1, "day_type"] = "Holiday"
 
 #0-1 values back to real units
-day["temp_c"] = day["temp"] * 41
+day["temp_f"] = day["temp"] * 41 * 9 / 5 + 32  #celsius, then fahrenheit
 day["humidity"] = day["hum"] * 100
-day["wind"] = day["windspeed"] * 67
+day["wind"] = day["windspeed"] * 67 * 0.621371  #km/h, then mph
 ```
 
 ### A.2 Summary Statistics and Frequency Tables
@@ -381,11 +381,11 @@ counts = day["weather"].value_counts()
 pd.DataFrame({"Days": counts, "Relative frequency": (counts / len(day)).round(3)})
 
 #Figure 10: correlation matrix of the weather measurements and rentals
-day[["temp_c", "atemp", "humidity", "wind", "casual", "registered", "cnt"]].corr()
+day[["temp_f", "atemp", "humidity", "wind", "casual", "registered", "cnt"]].corr()
 
 #Table 7: grouped summaries by season
 day.groupby("season").agg(days=("cnt", "size"), median_rentals=("cnt", "median"),
-                          mean_rentals=("cnt", "mean"), median_temp=("temp_c", "median"))
+                          mean_rentals=("cnt", "mean"), median_temp=("temp_f", "median"))
 ```
 
 ### A.3 Histogram (Figure 1)
@@ -402,8 +402,8 @@ alt.Chart(day).mark_bar().encode(
 ### A.4 Scatterplot with a Trend Line (Figure 5)
 
 ```python
-points = alt.Chart(day).mark_circle(opacity=0.3)  #see-through points for overplotting.encode(x="temp_c:Q", y="cnt:Q")
-trend = alt.Chart(day).transform_loess("temp_c", "cnt").mark_line(color="orange").encode(x="temp_c:Q", y="cnt:Q")
+points = alt.Chart(day).mark_circle(opacity=0.3)  #see-through points for overplotting.encode(x="temp_f:Q", y="cnt:Q")
+trend = alt.Chart(day).transform_loess("temp_f", "cnt").mark_line(color="orange").encode(x="temp_f:Q", y="cnt:Q")
 (points + trend).properties(title="Moderate Positive Relationship Between Temperature and Rentals")
 ```
 
@@ -415,9 +415,9 @@ alt.Chart(day).mark_boxplot().encode(
     x=alt.X("season:N", sort=["Winter", "Spring", "Summer", "Fall"]), y="cnt:Q")
 
 #one panel per season with its own trend line (Figure 11)
-base = alt.Chart(day).encode(x="temp_c:Q", y="cnt:Q")
+base = alt.Chart(day).encode(x="temp_f:Q", y="cnt:Q")
 panel = alt.layer(base.mark_circle(opacity=0.4),
-                  base.transform_loess("temp_c", "cnt", groupby=["season"]).mark_line(color="orange"))
+                  base.transform_loess("temp_f", "cnt", groupby=["season"]).mark_line(color="orange"))
 panel.properties(width=230, height=200).facet(column=alt.Column("season:N", sort=["Winter", "Spring", "Summer", "Fall"]))
 ```
 
@@ -427,7 +427,7 @@ panel.properties(width=230, height=200).facet(column=alt.Column("season:N", sort
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import KFold, cross_val_predict
 
-X = pd.get_dummies(day[["yr", "mnth", "workingday", "holiday", "temp_c", "humidity", "wind", "weather"]])
+X = pd.get_dummies(day[["yr", "mnth", "workingday", "holiday", "temp_f", "humidity", "wind", "weather"]])
 model = GradientBoostingRegressor(n_estimators=300, learning_rate=0.05, max_depth=3, random_state=0)
 
 #5-fold cross-validation: each day is predicted by a model that never saw that day

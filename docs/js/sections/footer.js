@@ -2,7 +2,7 @@
 import { esc, section } from "../format.js";
 
 //columns shown in the table and the csv
-const COLUMNS = ["date", "season", "weekday", "day_type", "weather", "temp_c", "humidity", "wind", "cnt", "registered", "casual",
+const COLUMNS = ["date", "season", "weekday", "day_type", "weather", "temp_f", "humidity", "wind", "cnt", "registered", "casual",
   "expected_cnt", "event"];
 
 export function render(v, el) {

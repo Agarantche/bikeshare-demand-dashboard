@@ -14,7 +14,7 @@ from sklearn.model_selection import KFold, cross_val_predict
 #what the model predicts: all riders, registered riders and casual riders (one model each)
 TARGETS = ["cnt", "registered", "casual"]
 #number columns the model uses
-NUMERIC = ["year", "mnth", "workingday", "holiday", "temp_c", "humidity", "wind"]
+NUMERIC = ["year", "mnth", "workingday", "holiday", "temp_f", "humidity", "wind"]
 #text columns the model uses, these get turned into 0/1 columns
 CATEGORIES = {
     "weekday": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
