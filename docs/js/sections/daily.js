@@ -1,7 +1,7 @@
 //daily rentals chart (actual vs expected) and the day details that open under it
 import { draw, hand } from "../charts.js";
 import { DATA, hourOf, mean } from "../data.js";
-import { esc, fdate, fint, fspct, head, legend } from "../format.js";
+import { esc, fdate, fhour, fint, fspct, head, hourExpr, legend } from "../format.js";
 import { ABOVE, DISRUPTED, MONTHS, RIDERS } from "../settings.js";
 import { openDay, set, state } from "../state.js";
 import { C } from "../theme.js";
@@ -178,9 +178,9 @@ function renderDay(v, el) {
 
   //this day's hours as bars, a typical day like it (same month, year and day type) as a line
   const same = days.filter((d) => d.year === o.year && d.mnth === o.mnth && d.day_type === o.day_type && d.date !== o.date);
-  const H = Array.from({ length: 24 }, (_, h) => ({ hr: h, day: hourOf(o, h, col), typ: mean(same, (d) => hourOf(d, h, col)) ?? 0 }));
-  const hx = { field: "hr", type: "ordinal", title: null, axis: { labelAngle: 0, labelExpr: "datum.value % 2 == 0 ? datum.value + ':00' : ''" } };
-  const tip = [{ field: "hr", type: "ordinal", title: "Hour" }, { field: "day", type: "quantitative", title: "This day", format: ",.0f" },
+  const H = Array.from({ length: 24 }, (_, h) => ({ hr: h, time: fhour(h), day: hourOf(o, h, col), typ: mean(same, (d) => hourOf(d, h, col)) ?? 0 }));
+  const hx = { field: "hr", type: "ordinal", title: null, axis: { labelAngle: 0, labelExpr: `datum.value % 3 == 0 ? ${hourExpr()} : ''` } };
+  const tip = [{ field: "time", type: "nominal", title: "Time" }, { field: "day", type: "quantitative", title: "This day", format: ",.0f" },
     { field: "typ", type: "quantitative", title: "Typical", format: ",.0f" }];
   return draw(el.querySelector("#dd-chart"), { height: 180, data: { values: H }, layer: [
     { mark: { type: "bar", color: C.BLUE, cornerRadius: 3 }, encoding: { x: hx, y: { field: "day", type: "quantitative", title: null, axis: { format: ",.0f", tickCount: 3 } }, tooltip: tip } },

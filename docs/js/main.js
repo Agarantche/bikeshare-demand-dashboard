@@ -33,11 +33,12 @@ async function render() {
   const v = build(); //filtered days and everything the sections need
   const page = $("page");
   const newView = state.view !== lastView;
-  const scrollY = newView ? 0 : window.scrollY; //a new part starts at the top
-  page.style.minHeight = newView ? "" : page.offsetHeight + "px"; //keeps the page tall while it redraws so it doesnt jump
+  const turned = newView || state.lab !== lastLab; //a new part, or a different lab inside the analysis
+  const scrollY = turned ? 0 : window.scrollY; //a new part or lab starts at the top
+  page.style.minHeight = turned ? "" : page.offsetHeight + "px"; //keeps the page tall while it redraws so it doesnt jump
   //the small journal animations (circles drawing, notes writing in) only play when a part opens, see style.css
   page.classList.toggle("opening", newView);
-  page.classList.toggle("turned", newView || state.lab !== lastLab);
+  page.classList.toggle("turned", turned);
   clearTimeout(settle);
   settle = setTimeout(() => page.classList.remove("opening", "turned"), 1800);
   lastView = state.view;
@@ -53,12 +54,13 @@ async function render() {
     (parts.length ? "" : `<div class="warn">No days match these filters. Change one of them or click <b>Reset</b>.</div>`);
   $("foot").innerHTML = footer.footerHtml();
   const jobs = parts.map((p, i) => p.render(v, $("p-" + i)));
-  window.scrollTo(0, scrollY);
+  const jump = () => window.scrollTo({ top: scrollY, behavior: "instant" }); //straight there, no sliding
+  jump();
   try { await Promise.all(jobs); } catch (e) { console.error(e); }
 
   page.style.minHeight = "";
-  if (ui.scrollTo) { $(ui.scrollTo)?.scrollIntoView({ block: "start" }); ui.scrollTo = null; } //like after clicking a table row
-  else window.scrollTo(0, scrollY);
+  if (ui.scrollTo) { $(ui.scrollTo)?.scrollIntoView({ block: "start", behavior: "instant" }); ui.scrollTo = null; } //like after clicking a table row
+  else jump();
   drawing = false;
   if (again) { again = false; render(); }
 }

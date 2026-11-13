@@ -1,6 +1,6 @@
 //the filter bar at the top, and the overview: the summary sentence, the 4 number cards with their handwritten notes (the daily chart is daily.js)
 import { mean, hourlyAverage } from "../data.js";
-import { fint, fspct, fpct, section } from "../format.js";
+import { fhour, fint, fspct, fpct, section } from "../format.js";
 import { FILTERS, RIDERS } from "../settings.js";
 import { resetFilters, set, state } from "../state.js";
 
@@ -52,7 +52,7 @@ export function render(v, el) {
   const total = d.reduce((s, x) => s + x.act, 0);
   const yoyChip = py.yoy != null ? `<span class="chip ${py.yoy >= 0 ? "good" : "bad"}">${fspct(py.yoy)}</span>` : "";
   const text = `Bikes average <b>${fint(mean(d, (x) => x.act))}</b> rentals a day in this view` +
-    (py.yoy != null ? ` (${fspct(py.yoy)} in 2012 vs 2011)` : "") + `, busiest at <b>${peak}:00</b>. Capital Bikeshare, Washington DC, 2011–2012.`;
+    (py.yoy != null ? ` (${fspct(py.yoy)} in 2012 vs 2011)` : "") + `, busiest at <b>${fhour(peak)}</b>. Capital Bikeshare, Washington DC, 2011–2012.`;
 
   //handwritten notes next to the numbers, picked from what the numbers actually say
   const hourNote = peak >= 16 && peak <= 19 ? "everyone heading home" : peak >= 6 && peak <= 9 ? "everyone off to work"
@@ -66,7 +66,7 @@ export function render(v, el) {
   <div class="kpis">
     <div class="kpi"><span class="kpi-l">Average rentals per day</span><span class="kpi-v ring">${fint(mean(d, (x) => x.act))}</span>
       <span class="kpi-s">2011 → 2012: ${fint(py[2011])} → ${fint(py[2012])} ${yoyChip}</span>${jot("a normal day")}</div>
-    <div class="kpi"><span class="kpi-l">Busiest hour</span><span class="kpi-v">${peak}:00</span>
+    <div class="kpi"><span class="kpi-l">Busiest hour</span><span class="kpi-v">${fhour(peak)}</span>
       <span class="kpi-s">${ratio.toFixed(1)}× an average hour</span>${jot(hourNote)}</div>
     <div class="kpi"><span class="kpi-l">${shareCol === "casual" ? "Casual" : "Registered"} share of rides</span><span class="kpi-v">${fpct(regShare)}</span>
       <span class="kpi-s">Working days <b>${fpct(share(d.filter((x) => x.day_type === "Working day")))}</b> · weekends <b>${fpct(share(d.filter((x) => x.day_type === "Weekend")))}</b></span>${jot(shareNote)}</div>

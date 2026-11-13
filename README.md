@@ -4,9 +4,15 @@
 
 **Author:** Adam Garantche  
 **Course:** ASCI 2000 – Data Visualization Final Project  
-**Date:** October 2026  
-**Status:** v4 – website version (runs in the browser on GitHub Pages)  
+**Date:** November 2026  
+**Status:** v6 – ride journal website (runs in the browser on GitHub Pages)  
 **Live dashboard:** https://agarantche.github.io/bikeshare-demand-dashboard/
+
+[![The dashboard's home page: the research question and four key findings, styled as a ride journal](docs/img/home.png)](https://agarantche.github.io/bikeshare-demand-dashboard/)
+
+| Overview in dark mode ("Night ride") | One of the eight lab pages |
+|---|---|
+| ![Overview page with four number cards and the daily chart of actual vs expected rentals](docs/img/overview.png) | ![Lab 6 page with a sticky-note takeaway and boxplots of rentals by season](docs/img/analysis.png) |
 
 ---
 
@@ -14,9 +20,9 @@
 
 This project investigates how bike rental demand changes with time of day, season, weather, temperature, type of day and rider type. The analysis uses the Capital Bikeshare **Bike Sharing Dataset** from the UCI Machine Learning Repository: 731 days and 17,379 hours of rentals in Washington, D.C., from 2011 to 2012. The business purpose is to help a bike-share operator plan bike availability, staffing and maintenance around when and why demand rises and falls.
 
-Exploratory data analysis was done with summary statistics and graphs, applying the methods of course Labs 2–9, and the results are presented in an interactive dashboard website that anyone can open in a browser. Daily rentals are spread fairly evenly (mean 4,504, median 4,548), while hourly rentals are strongly right-skewed, so a log scale was used to show quiet and busy hours together. Demand follows a clear commuter rhythm on working days, with peaks at 8:00 and 17:00, and one broad midday peak on weekends. Rentals rise with temperature (a moderate positive correlation, r = +0.63), fall by 63% on rain or snow days compared with clear days, and grew 64% from 2011 to 2012.
+Exploratory data analysis was done with summary statistics and graphs, applying the methods of course Labs 2–9, and the results are presented in an interactive dashboard website that anyone can open in a browser. Daily rentals are spread fairly evenly (mean 4,504, median 4,548), while hourly rentals are strongly right-skewed, so a log scale was used to show quiet and busy hours together. Demand follows a clear commuter rhythm on working days, with peaks at 8 AM and 5 PM, and one broad midday peak on weekends. Rentals rise with temperature (a moderate positive correlation, r = +0.63), fall by 63% on rain or snow days compared with clear days, and grew 64% from 2011 to 2012.
 
-At first, the season looks like the main driver of demand: Winter averages 2,604 rentals a day, compared with 5,644 in Summer. Further analysis showed that the seasons have very different temperatures, and that warmer days are busier within every season, so much of the seasonal gap comes from temperature. A machine learning model was added to estimate the expected rentals for each day, which makes unusual days stand out, such as Hurricane Sandy (−99%) and Christmas week. The main recommendations are to schedule maintenance in the 3:00–6:00 window and in January, to have bikes in place before the 8:00 and 17:00 peaks, to plan around rain forecasts, and to size the fleet for peak months rather than the average.
+At first, the season looks like the main driver of demand: Winter averages 2,604 rentals a day, compared with 5,644 in Summer. Further analysis showed that the seasons have very different temperatures, and that warmer days are busier within every season, so much of the seasonal gap comes from temperature. A machine learning model was added to estimate the expected rentals for each day, which makes unusual days stand out, such as Hurricane Sandy (−99%) and Christmas week. The main recommendations are to schedule maintenance in the 3 AM to 6 AM window and in January, to have bikes in place before the 8 AM and 5 PM peaks, to plan around rain forecasts, and to size the fleet for peak months rather than the average.
 
 ---
 
@@ -299,14 +305,14 @@ The most important lesson from this analysis is that a correct chart can still l
 
 The dashboard adds a second way to avoid misleading comparisons: a model that estimates each day's expected rentals from its weather, temperature, month and type of day. Comparing actual with expected rentals separates normal variation from truly unusual days. The biggest shortfalls line up with real events, such as Hurricane Sandy (22 rentals vs about 2,900 expected), Hurricane Irene, the January 2011 snowstorm and Christmas week.
 
-The two rider groups behave differently. Registered members (81% of rentals) are commuters: their pattern has sharp peaks at 8:00 and 17:00 on working days. Casual riders are leisure riders who ride mostly on warm weekend afternoons, making up 32% of weekend and holiday rentals, and they are far more sensitive to bad weather.
+The two rider groups behave differently. Registered members (81% of rentals) are commuters: their pattern has sharp peaks at 8 AM and 5 PM on working days. Casual riders are leisure riders who ride mostly on warm weekend afternoons, making up 32% of weekend and holiday rentals, and they are far more sensitive to bad weather.
 
 ---
 
 ## 7 Business Recommendations
 
-1. **Schedule maintenance in the quiet windows.** Demand is lowest from 3:00 to 6:00, about 12 rentals an hour (2% of the evening peak). For longer jobs, January is the quietest month (2,176 rentals a day vs 5,772 in June).
-2. **Have stations stocked before the commuter peaks.** Working-day demand peaks at 8:00 and 17:00 (about 473 and 524 rentals an hour). Weekends peak later, around 13:00, so rebalancing staff should shift then.
+1. **Schedule maintenance in the quiet windows.** Demand is lowest from 3 AM to 6 AM, about 12 rentals an hour (2% of the evening peak). For longer jobs, January is the quietest month (2,176 rentals a day vs 5,772 in June).
+2. **Have stations stocked before the commuter peaks.** Working-day demand peaks at 8 AM and 5 PM (about 473 and 524 rentals an hour). Weekends peak later, around 1 PM, so rebalancing staff should shift then.
 3. **Plan around the weather forecast.** Rain or snow cuts demand by about 63%. On those days, move rebalancing crews onto repairs and expect casual riders to all but disappear.
 4. **Size the fleet for the peak, not the average.** Demand grew 64% from 2011 to 2012 (registered +68%, casual +50%), and 2012's busiest month, September, averaged 7,286 rentals a day.
 5. **Compare days fairly.** When judging whether a day or period was good or bad, compare it with what its weather and temperature would predict, not just with the overall or seasonal average.
@@ -476,6 +482,7 @@ A **sidebar menu** opens one part of the dashboard at a time, so there is no lon
 | `docs/js/stats.js` | Percentiles, skewness, correlation, histogram bins, `cut()` groups and density curves for Section 4 |
 | `docs/js/sections/` | One file per part of the page: `nav` (sidebar), `home`, `overview`, `daily`, `when`, `disrupt`, `riders`, `eda`, `footer` (data table and footer) |
 | `docs/data/` | `days.json` and `hours.json`, made by `export_data.py` |
+| `docs/img/` | Screenshots of the dashboard, shown at the top of this README |
 | `export_data.py` | Runs the cleaning and the model, and saves the results for the website |
 | `prep.py` | Loads and cleans the data |
 | `model.py` | The demand model: expected rentals per day, known events, and a cache so it only retrains when something changes |

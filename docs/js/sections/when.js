@@ -1,7 +1,7 @@
 //section 1: when is demand high (the weekday x hour heatmap with its time slot details, and the daily rhythm)
 import { draw, hourLines } from "../charts.js";
 import { DATA, hourOf, mean } from "../data.js";
-import { barList, fdate, fint, fpct, head, legend, section } from "../format.js";
+import { barList, fdate, fint, fpct, fslot, head, hourExpr, legend, section } from "../format.js";
 import { DAY_TYPES, FILTERS, WEEKDAY_NAMES, WEEKDAYS } from "../settings.js";
 import { match, openDay, openSlot, set, state, toggle } from "../state.js";
 import { C } from "../theme.js";
@@ -25,7 +25,7 @@ export function render(v, el) {
   if (state.slot) renderSlot(v, slotEl);
   else {
     shown = null;
-    slotEl.innerHTML = `<div class="hint">Try the strongest cells around 8:00 and 17:00 on weekdays, or the empty early-morning hours.</div>`;
+    slotEl.innerHTML = `<div class="hint">Try the strongest cells around 8 AM and 5 PM on weekdays, or the empty early-morning hours.</div>`;
   }
 
   return Promise.all([
@@ -47,18 +47,18 @@ function heatSpec(v) {
     const busy = Math.sqrt(c.v / vmax) > 0.55; //the busy cells that are mostly filled in
     c.tc = busy ? C.PANEL : C.MUTED; //busy cells get numbers in the card color so they stand out in both modes
     c.label = fint(c.v);
-    c.hrs = `${c.hr}:00–${c.hr + 1}:00`;
+    c.hrs = fslot(c.hr);
     c.sel = state.slot && state.slot[0] === c.weekday && state.slot[1] === c.hr; //the clicked cell gets an outline
   }
   const x = { field: "hr", type: "ordinal", title: null,
-    axis: { orient: "top", labelAngle: 0, ticks: false, domain: false, labelExpr: "datum.value % 2 == 0 ? datum.value + ':00' : ''" } };
+    axis: { orient: "top", labelAngle: 0, ticks: false, domain: false, labelOverlap: "greedy", labelExpr: `datum.value % 3 == 0 ? ${hourExpr()} : ''` } };
   const y = { field: "weekday", type: "ordinal", title: null, sort: WEEKDAYS, axis: { ticks: false, domain: false } };
   return { height: 230, data: { values: cells }, layer: [
     //busier hours are less see-through so they look stronger
     { mark: { type: "rect", color: C.BLUE, cornerRadius: 3, stroke: C.FG, cursor: "pointer" },
       encoding: { x, y, opacity: { field: "v", type: "quantitative", scale: { type: "sqrt", domain: [0, vmax], range: [0.03, 1] }, legend: null },
         strokeWidth: { condition: { test: "datum.sel", value: 2 }, value: 0 },
-        tooltip: [{ field: "weekday", title: "Day" }, { field: "hrs", title: "Hour" }, { field: "v", type: "quantitative", title: "Avg rentals", format: ",.0f" }] } },
+        tooltip: [{ field: "weekday", title: "Day" }, { field: "hrs", title: "Time" }, { field: "v", type: "quantitative", title: "Avg rentals", format: ",.0f" }] } },
     { mark: { type: "text", fontSize: 11 }, encoding: { x, y, text: { field: "label" }, color: { field: "tc", type: "nominal", scale: null } } },
   ] };
 }
@@ -107,7 +107,7 @@ function renderSlot(v, el) {
   }
   const fresh = shown !== `${wd} ${h}`;
   shown = `${wd} ${h}`;
-  el.innerHTML = `<div class="detail${fresh ? " enter" : ""}"><div class="detail-h"><span class="h4">${WEEKDAY_NAMES[wd]}, ${h}:00–${h + 1}:00</span>
+  el.innerHTML = `<div class="detail${fresh ? " enter" : ""}"><div class="detail-h"><span class="h4">${WEEKDAY_NAMES[wd]}, ${fslot(h)}</span>
     <span class="spacer"></span><button class="btn" id="slot-close">Close ×</button></div>${body}</div>`;
   el.querySelector("#slot-close").addEventListener("click", () => set({ slot: null }));
   el.querySelectorAll("button.hb").forEach((b) => b.addEventListener("click", () => toggle(b.dataset.k, b.dataset.v)));

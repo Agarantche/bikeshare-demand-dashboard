@@ -1,7 +1,7 @@
 //the intro page people see first: the question, 4 key findings and buttons into each part
 //it always uses all 731 days and all riders, so the findings dont change with the filters
 import { DATA, hourlyAverage, mean } from "../data.js";
-import { fint, fpct, fspct } from "../format.js";
+import { fhour, fint, fpct, fspct } from "../format.js";
 import { DISRUPTED } from "../settings.js";
 import { go } from "../state.js";
 import { corr } from "../stats.js";
@@ -39,8 +39,8 @@ export function render(v, el) {
 
     <div class="over">Four things the data told me</div>
     <div class="finds">
-      ${finding(`${peak}:00`, "the rush is real", `The busiest hour on working days, with a second commuter peak at ${morning}:00. The quietest time is around
-        ${quiet}:00, with about ${fint(all[quiet])} rentals an hour.`, "when", null, "When do people ride?")}
+      ${finding(fhour(peak), "the rush is real", `The busiest hour on working days, with a second commuter peak at ${fhour(morning)}. The quietest time is around
+        ${fhour(quiet)}, with about ${fint(all[quiet])} rentals an hour.`, "when", null, "When do people ride?")}
       ${finding(fspct(rain), "rain ruins everything", `Rain or snow days have ${fpct(Math.abs(rain))} fewer rentals than clear days, and warmer days are busier
         (r = +${r.toFixed(2)}).`, "analysis", 4, "Weather and rentals")}
       ${finding(disrupted, "days that went sideways", "days fell more than 50% below what the model expected for their weather, mostly storms like Hurricane Sandy and holidays.",

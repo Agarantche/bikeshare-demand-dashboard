@@ -1,4 +1,5 @@
 //draws vega-lite charts (the same chart system altair uses) and the chart helpers the sections share
+import { hourExpr } from "./format.js";
 import { C, mode } from "./theme.js";
 
 //chart styling that matches the page: karla for the numbers, fraunces for the titles, see-through background, dotted grid lines
@@ -40,8 +41,8 @@ export async function draw(el, spec, onClick) {
   return res.view;
 }
 
-//hour axis with a label every 3 hours like 0:00, 3:00
-const HOUR_AXIS = { values: [0, 3, 6, 9, 12, 15, 18, 21], labelExpr: "datum.value + ':00'", title: null, grid: false };
+//hour axis with a label every 3 hours like 12 AM, 3 AM
+const HOUR_AXIS = { values: [0, 3, 6, 9, 12, 15, 18, 21], labelExpr: hourExpr(), title: null, grid: false };
 
 //lines by hour with a hover line that lists every series
 //rows are {hr, series, value}, colors is series -> color, dashed is a list of series to draw dashed,
@@ -59,10 +60,10 @@ export function hourLines(rows, colors, { dashed = [], opacity = {}, ymax = null
         encoding: { x, y, color, opacity: { field: "op", type: "quantitative", scale: null },
           strokeDash: { condition: { test: `indexof(${JSON.stringify(dashed)}, datum.series) >= 0`, value: [5, 4] }, value: [1, 0] } } },
       { params: [{ name: "hover", select: { type: "point", on: "pointerover", nearest: true, fields: ["hr"], clear: "pointerout" } }],
-        transform: [{ pivot: "series", value: "value", groupby: ["hr"] }],
+        transform: [{ pivot: "series", value: "value", groupby: ["hr"] }, { calculate: hourExpr("hr"), as: "time" }],
         mark: { type: "rule", color: C.REF },
         encoding: { x, opacity: { condition: { param: "hover", empty: false, value: 1 }, value: 0 },
-          tooltip: [{ field: "hr", type: "quantitative", title: "Hour" }, ...series.map((s) => ({ field: s, type: "quantitative", format: ",.0f" }))] } },
+          tooltip: [{ field: "time", type: "nominal", title: "Time" }, ...series.map((s) => ({ field: s, type: "quantitative", format: ",.0f" }))] } },
       { mark: { type: "point", filled: true, size: 50 },
         encoding: { x, y, color, opacity: { condition: { param: "hover", empty: false, value: 1 }, value: 0 } } },
       ...(notes.length ? [{ data: { values: notes }, mark: { type: "text", ...hand(), dy: -12 }, encoding: { x, y, text: { field: "text" } } }] : []),

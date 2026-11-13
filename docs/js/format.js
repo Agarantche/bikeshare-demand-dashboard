@@ -26,6 +26,24 @@ export function fdate(s, long = false) {
     : { month: "short", day: "2-digit", year: "numeric", timeZone: "UTC" });
 }
 
+//hour of the day (0 to 23) as a 12-hour time like 8 AM or 5 PM
+export function fhour(h) {
+  const x = ((h % 24) + 24) % 24;
+  return `${x % 12 || 12} ${x < 12 ? "AM" : "PM"}`;
+}
+
+//one hour slot like 5–6 PM (or 11 AM–12 PM when it crosses noon)
+export function fslot(h) {
+  const a = fhour(h), b = fhour(h + 1);
+  return a.slice(-2) === b.slice(-2) ? `${a.slice(0, -3)}–${b}` : `${a}–${b}`;
+}
+
+//the same 12-hour time as a vega expression, for chart axes and tooltips (field is where the hour is, like "value" or "hr")
+export function hourExpr(field = "value") {
+  const h = "datum." + field;
+  return `(${h} % 12 == 0 ? 12 : ${h} % 12) + (${h} < 12 ? ' AM' : ' PM')`;
+}
+
 //makes text safe to put inside html
 export function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
