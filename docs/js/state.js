@@ -5,7 +5,7 @@ import { FILTERS } from "./settings.js";
 export const state = { rider: "all", year: "all", season: "all", daytype: "all", weather: "all", openDay: null, slot: null, view: "home", lab: 1 };
 
 //the parts of the page the sidebar can open
-const VIEWS = ["home", "overview", "when", "disrupt", "riders", "analysis", "data"];
+const VIEWS = ["home", "overview", "when", "disrupt", "riders", "analysis", "data", "references"];
 
 //main.js gives us its function that redraws the page
 let redraw = () => {};

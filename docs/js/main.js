@@ -16,10 +16,11 @@ import * as disrupt from "./sections/disrupt.js";
 import * as riders from "./sections/riders.js";
 import * as eda from "./sections/eda.js";
 import * as footer from "./sections/footer.js";
+import * as refs from "./sections/refereneceAndAckknowledgment.js";
 
 //what each part of the page shows, top to bottom (only the open part gets drawn)
 const VIEWS = {
-  home: [home], overview: [overview, daily], when: [when], disrupt: [disrupt], riders: [riders], analysis: [eda], data: [footer],
+  home: [home], overview: [overview, daily], when: [when], disrupt: [disrupt], riders: [riders], analysis: [eda], data: [footer], references: [refs],
 };
 
 const $ = (id) => document.getElementById(id);
@@ -45,10 +46,11 @@ async function render() {
   lastLab = state.lab;
 
   nav.render(v, $("side"), render);
-  $("filters").hidden = state.view === "home"; //the home page always shows everything
-  if (state.view !== "home") overview.renderFilters(v, $("filters"));
+  const unfiltered = state.view === "home" || state.view === "references"; //these pages dont change with the filters
+  $("filters").hidden = unfiltered;
+  if (!unfiltered) overview.renderFilters(v, $("filters"));
   //the overview shows its own message when no days match, the other parts just show nothing
-  const parts = state.view === "overview" || state.view === "home" || v.d.length ? VIEWS[state.view] : [];
+  const parts = state.view === "overview" || unfiltered || v.d.length ? VIEWS[state.view] : [];
   if (newView) { page.classList.remove("fade"); void page.offsetWidth; page.classList.add("fade"); } //a quick fade in when a new part opens
   page.innerHTML = parts.map((_, i) => `<div id="p-${i}"></div>`).join("") +
     (parts.length ? "" : `<div class="warn">No days match these filters. Change one of them or click <b>Reset</b>.</div>`);

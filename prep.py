@@ -26,10 +26,12 @@ def clean(df):
     df.loc[df["workingday"] == 1, "day_type"] = "Working day"
     df.loc[df["holiday"] == 1, "day_type"] = "Holiday"
 
-    #the dataset stores these as 0-1, multiplying by their max puts them back in real units (celsius and km/h)
+    #the dataset stores these as 0-1. the readme gives the ranges they were scaled from:
+    #temperature -8 to 39 C, feels-like -16 to 50 C, humidity 0 to 100 %, wind 0 to 67 km/h
+    #(a day's values are the average of its hours, so the same ranges work for day.csv)
     #then temperature goes to fahrenheit and wind to mph, since thats what people in the us are used to
-    df["temp_f"] = df["temp"] * 41 * 9 / 5 + 32
-    df["feels_like_f"] = df["atemp"] * 50 * 9 / 5 + 32
+    df["temp_f"] = (df["temp"] * 47 - 8) * 9 / 5 + 32
+    df["feels_like_f"] = (df["atemp"] * 66 - 16) * 9 / 5 + 32
     df["humidity"] = df["hum"] * 100
     df["wind"] = df["windspeed"] * 67 * 0.621371  #mph
 

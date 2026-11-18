@@ -157,6 +157,10 @@ a { color: var(--link); }
 .h3 { font-family: var(--f-head); font-size: 20px; font-weight: 600; color: var(--head); margin: 0; line-height: 1.25; }
 .h4 { font-family: var(--f-head); font-size: 18px; font-weight: 600; color: var(--head); }
 .note { font-size: 13.5px; color: var(--muted); margin: 3px 0 8px; }
+/* references list: numbered, with a hanging indent like a bibliography */
+.refs { margin: 10px 0 4px; padding-left: 1.6em; }
+.refs li { margin-bottom: 8px; line-height: 1.5; overflow-wrap: anywhere; }
+.refs.tools { list-style: square; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 18px; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 22px; }
 

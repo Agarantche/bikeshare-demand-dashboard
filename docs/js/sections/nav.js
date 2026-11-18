@@ -16,6 +16,7 @@ const ITEMS = [
   ["riders", "3", "Who's riding?"],
   ["analysis", "4", "Showing my work (labs)"],
   ["data", "≡", "Data table"],
+  ["references", "§", "References"],
 ];
 
 export function render(v, el, redraw) {

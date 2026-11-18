@@ -98,7 +98,7 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 | `casual` | Numerical | Response (by rider type) | Rentals by casual (non-member) users |
 | `hr` | Numerical (0–23) | Primary explanatory | Hour of the day (`hour.csv` only) |
 | `season` | Categorical | Primary explanatory | Season, relabeled by date as Winter, Spring, Summer, Fall* |
-| `temp` | Numerical | Primary explanatory | Temperature, normalized (× 41 = °C, then converted to °F) |
+| `temp` | Numerical | Primary explanatory | Temperature, scaled from −8 to 39 °C (per the dataset readme), converted to °F |
 | `weathersit` | Categorical | Primary explanatory | 1 = Clear, 2 = Mist/cloudy, 3 = Light rain/snow, 4 = Heavy rain/snow |
 | `workingday` | Binary | Primary explanatory | 1 if the day is neither a weekend nor a holiday |
 | `holiday` | Binary | Supporting | 1 if the day is a public holiday |
@@ -106,7 +106,7 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 | `dteday` | Date | Supporting | Date |
 | `yr` | Categorical | Supporting | Year (0 = 2011, 1 = 2012) |
 | `mnth` | Numerical (1–12) | Supporting | Month |
-| `atemp` | Numerical | Supporting | Feels-like temperature, normalized (× 50 = °C, then converted to °F) |
+| `atemp` | Numerical | Supporting | Feels-like temperature, scaled from −16 to 50 °C, converted to °F |
 | `hum` | Numerical | Supporting | Humidity, normalized (× 100 = %) |
 | `windspeed` | Numerical | Supporting | Wind speed, normalized (× 67 = km/h, then converted to mph) |
 | `instant` | Numerical | Not used | Record index |
@@ -120,7 +120,7 @@ The analysis was done in Python, using pandas for data preparation and scikit-le
 Both files were loaded with pandas and checked for size, variable types, missing values and duplicates before analysis (`prep.py`). The original rental counts were kept, because their units are meaningful for business interpretation. The following changes were made:
 
 - Codes were replaced with labels (season, weather, year, weekday), and the season labels were corrected by date.
-- Temperature, feels-like temperature, humidity and wind speed were converted from the 0–1 scale back to real units, with temperature in °F and wind speed in mph, the units most U.S. readers use.
+- Temperature, feels-like temperature, humidity and wind speed were converted from the 0–1 scale back to real units using the ranges in the dataset's readme (temperature −8 to 39 °C, feels-like −16 to 50 °C), with temperature in °F and wind speed in mph, the units most U.S. readers use.
 - A `day_type` variable (Working day, Weekend, Holiday) was created, because the original `workingday` flag groups weekends and holidays together.
 - Weather category 4 (heavy rain, only 3 hours in the data) was merged into Rain/snow.
 - A log scale was used for selected displays of hourly rentals, where the values are strongly right-skewed.
@@ -247,7 +247,7 @@ Rentals rise as it gets warmer, but the relationship is not perfectly linear: th
 
 Summer has the highest median and Winter by far the lowest (**Figure 6**). In Winter the mean is well above the median, a sign of right skew within the season. By weather, mean rentals drop 17% from clear to mist/cloudy days and 63% on rain/snow days. Holidays have the lowest median and the widest spread, but only 21 days. The dashboard shows Figure 6 as a boxplot (medians, IQR, outliers), a violin plot (the shape), jittered points (every day) or a bar of means. The bar of means is the easiest to read but hides the spread, which is why the other three are better.
 
-It would be easy to conclude that the season itself drives demand, but Lab 6 showed that a third variable can be behind a group difference (for diamonds, carat explained why Fair cuts cost more). Here that variable is temperature: the median Winter day is about 53°F, compared with 85°F in Summer (**Figure 7**).
+It would be easy to conclude that the season itself drives demand, but Lab 6 showed that a third variable can be behind a group difference (for diamonds, carat explained why Fair cuts cost more). Here that variable is temperature: the median Winter day is about 42°F, compared with 78°F in Summer (**Figure 7**).
 
 ### 5.6 Two Categorical Variables: Season and Weather
 
@@ -271,11 +271,11 @@ Temperature was cut into 5 equal-width groups (`cut(temp_f, 5)`), and each day w
 
 | Temperature group | Days | Low | Medium | High |
 |---|---|---|---|---|
-| 36–48°F | 43 | 100% | 0% | 0% |
-| 48–60°F | 194 | 66% | 24% | 10% |
-| 60–72°F | 175 | 30% | 37% | 34% |
-| 72–84°F | 192 | 8% | 41% | 51% |
-| 84–96°F | 127 | 3% | 43% | 54% |
+| 23–36°F | 43 | 100% | 0% | 0% |
+| 36–50°F | 194 | 66% | 24% | 10% |
+| 50–63°F | 173 | 30% | 37% | 33% |
+| 63–77°F | 194 | 8% | 41% | 51% |
+| 77–91°F | 127 | 3% | 43% | 54% |
 
 High-demand days get more common as it warms up: none of the coldest days are high-demand, compared with 54% of the hottest (**Figure 9**). The rise slows between the two warmest groups, matching the flattening in Figure 5. The count chart shows that the coldest group has only 43 days, while the proportional chart makes the mix easy to compare but hides group size, so the two are read together.
 
@@ -365,7 +365,7 @@ day.loc[day["workingday"] == 1, "day_type"] = "Working day"
 day.loc[day["holiday"] == 1, "day_type"] = "Holiday"
 
 #0-1 values back to real units
-day["temp_f"] = day["temp"] * 41 * 9 / 5 + 32  #celsius, then fahrenheit
+day["temp_f"] = (day["temp"] * 47 - 8) * 9 / 5 + 32  #scaled from -8 to 39 C, then fahrenheit
 day["humidity"] = day["hum"] * 100
 day["wind"] = day["windspeed"] * 67 * 0.621371  #km/h, then mph
 ```
@@ -465,6 +465,7 @@ A **sidebar menu** opens one part of the dashboard at a time, so there is no lon
 - **Section 3 – Who's on the bikes?** Commuters vs leisure riders through the day, on working days and weekends, with the commute peaks labeled.
 - **Section 4 – Showing my work (exploratory data analysis):** the tables and Figures 1–11 from Section 5 of this report, one lab at a time (Labs 2–9) with Previous / Next. Each part shows a one-line takeaway on a sticky note, with the full explanation under **Read more**. Buttons above each chart switch between the views compared in the labs, such as the number of bins, boxplot vs violin vs jittered points, or count vs proportional bars.
 - **Data table:** the filtered days, with a **Download as CSV** button.
+- **References:** the data sources, written materials, software and tools used, and who worked on the project.
 
 ### Project Files
 

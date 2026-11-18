@@ -1,0 +1,459 @@
+---
+title: "Bike-Share Demand Report"
+subtitle: "When and why people rent bikes: an hourly analysis of Capital Bikeshare data"
+author: "Adam Garantche"
+date: "ASCI 2000 Final Project, November 2026"
+output:
+  word_document:
+    reference_docx: !expr if (file.exists("report_style.docx")) "report_style.docx" else "default"
+---
+
+```{r setup, message = FALSE, warning = FALSE}
+#hides package messages and warnings so the report only shows code and results
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 4)
+library(tidyverse)
+theme_set(theme_minimal(base_size = 11))
+
+#colors used in the charts
+navy <- "#2f4b7c"
+red <- "#c0392b"
+weather_colors <- c("Clear" = "#a5bbdd", "Mist/cloudy" = "#4a6aa5", "Rain/snow" = "#c0392b")
+demand_colors <- c("Low" = "#d9d4c4", "Medium" = "#a5bbdd", "High" = "#2f4b7c")
+day_colors <- c("Working day" = "#2f4b7c", "Weekend" = "#c0392b", "Holiday" = "#a8690a")
+
+#hour of the day (0 to 23) as a 12-hour time like 8 AM
+hour_label <- function(h) paste(ifelse(h %% 12 == 0, 12, h %% 12), ifelse(h < 12, "AM", "PM"))
+```
+
+
+# Introduction
+
+This report analyzes 17,379 hours of bike rentals from Capital Bikeshare in Washington, D.C., covering all of 2011 and 2012. The business question is when and why people rent bikes, so that a bike-share operator can plan bikes, staff and maintenance around demand. Tasks 1 to 10 each apply the methods of one ASCI 2000 lab to the data and show the R code, its output and what it means. Task 11 is an executive summary written for the operator.
+
+*Table 1. The tasks in this report and the lab each one applies.*
+
+| Task | Lab | Topic |
+|---|---|---|
+| 1 | Lab 1 | Load and inspect the data |
+| 2 | Lab 2 | Variable types and factor levels |
+| 3 | Lab 3 | Univariate numerical analysis |
+| 4 | Lab 4 | Univariate categorical analysis |
+| 5 | Lab 5 | Relationships between two numerical variables |
+| 6 | Lab 6 | Numerical variables across categories |
+| 7 | Lab 7 | Relationships between two categorical variables |
+| 8 | Lab 8 | Categorical Y across numerical X |
+| 9 | Lab 9 | Correlation analysis |
+| 10 | Lab 10 | Three-variable analysis |
+| 11 | — | Executive summary |
+
+# Task 1 – Load and Inspect the Data (Lab 1)
+
+Before any analysis, the hourly file is loaded and inspected to confirm its size, its columns and the period it covers.
+
+```{r t1-1}
+#the csv is either next to this file or in the dataset folder
+data_folder <- if (file.exists("hour.csv")) "." else "bike+sharing+dataset (1)"
+bikes <- read_csv(file.path(data_folder, "hour.csv"))
+
+dim(bikes)
+range(bikes$dteday)
+glimpse(bikes)
+```
+
+*Table 2. The hourly data at a glance.*
+
+| Item | Result |
+|---|---|
+| Rows (one per hour) | 17,379 |
+| Columns | 17 |
+| First and last day | January 1, 2011 – December 31, 2012 |
+| Target variable | cnt (rentals started in the hour) = casual + registered |
+| Time variables | dteday, season, yr, mnth, hr, holiday, weekday, workingday |
+| Weather variables | weathersit, temp, atemp, hum, windspeed |
+| Not used | instant (row number) |
+
+The file has 17,379 rows and 17 columns. Each row is one hour of one day, from January 1, 2011 to December 31, 2012. The variable to explain is `cnt`, the number of rentals that started in that hour, which is the sum of `casual` (non-member) and `registered` (member) rentals. The other columns describe the time (`dteday`, `season`, `yr`, `mnth`, `hr`, `holiday`, `weekday`, `workingday`) and the weather (`weathersit`, `temp`, `atemp`, `hum`, `windspeed`); `instant` is only a row number.
+
+Two full years would be 731 days × 24 hours = 17,544 rows, so 165 hours are missing. Task 2 checks what those hours are.
+
+# Task 2 – Variable Types and Factor Levels (Lab 2)
+
+Several categorical variables are stored as number codes. R treats a number code as a number, so `summary()` reports an "average season" of about 2.5, which has no meaning:
+
+```{r t2-2}
+class(bikes$season)
+summary(bikes$season)
+```
+
+The dataset's readme does not match the dates for `season`, so the months covered by each code were checked first. Code 1 covers January to March plus late December, so it is labelled Winter:
+
+```{r t2-3}
+table(month = bikes$mnth, season_code = bikes$season)
+```
+
+The codes are then turned into labelled factors, and the weather values, which are stored on a 0–1 scale, are converted back to real units. The readme gives the ranges they were scaled from: temperature −8 to 39 °C, feels-like temperature −16 to 50 °C, humidity 0–100% and wind speed 0–67 km/h. Temperatures are converted to °F and wind speed to mph, the units most U.S. readers use.
+
+```{r t2-4}
+bikes <- bikes %>%
+  mutate(
+    season = factor(season, levels = 1:4, labels = c("Winter", "Spring", "Summer", "Fall")),
+    weather = factor(pmin(weathersit, 3), levels = 1:3, labels = c("Clear", "Mist/cloudy", "Rain/snow"), ordered = TRUE),
+    year = factor(yr, levels = 0:1, labels = c("2011", "2012")),
+    weekday = factor(weekday, levels = c(1:6, 0), labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")),
+    day_type = factor(case_when(holiday == 1 ~ "Holiday", workingday == 1 ~ "Working day", TRUE ~ "Weekend"),
+                      levels = c("Working day", "Weekend", "Holiday")),
+    temp_f = (temp * 47 - 8) * 9 / 5 + 32,
+    feels_like_f = (atemp * 66 - 16) * 9 / 5 + 32,
+    humidity = hum * 100,
+    wind_mph = windspeed * 67 * 0.621371
+  )
+
+levels(bikes$weather)
+is.ordered(bikes$weather)
+summary(bikes[, c("season", "year", "day_type", "weather", "hr", "temp_f", "humidity", "wind_mph", "cnt")])
+```
+
+*Table 3. Variable types before and after preparation.*
+
+| Variable | Statistical type | Stored in the file as | Used in this report as |
+|---|---|---|---|
+| season | Categorical (calendar order) | Number 1–4 | Factor: Winter, Spring, Summer, Fall |
+| weather | Categorical, ordered by severity | Number 1–4 (weathersit) | Ordered factor: Clear < Mist/cloudy < Rain/snow |
+| year | Categorical (2 levels) | Number 0–1 (yr) | Factor: 2011, 2012 |
+| weekday | Categorical (week order) | Number 0–6 (0 = Sunday) | Factor: Mon … Sun |
+| day_type | Categorical, not ordered | Made from holiday and workingday | Factor: Working day, Weekend, Holiday |
+| hr | Numerical, discrete | Number 0–23 | Number (and a category for the boxplots) |
+| temp_f, feels_like_f | Numerical, continuous | Scaled 0–1 (temp, atemp) | °F |
+| humidity, wind_mph | Numerical, continuous | Scaled 0–1 (hum, windspeed) | %, mph |
+| cnt, casual, registered | Numerical, discrete counts | Whole numbers | Rentals per hour |
+
+**Choices.** Weather is an ordered factor because its levels run from good to bad. Season and weekday follow the calendar, but they repeat in a cycle, so they are kept as plain factors in calendar order. The new `day_type` variable splits the dataset's `workingday` flag into working days, weekends and holidays, which the original flag lumps together; it has no natural order, because a weekend is not "more" than a holiday. Year has only two values, so it is treated as a category. The hour `hr` stays a number, because the gap between hours is meaningful and it is used as an x-axis, but it is treated as a category when rentals are compared hour by hour in Task 6. Weather code 4 (heavy rain or snow) occurs in only 3 hours, too few to summarize, so it is merged into Rain/snow.
+
+## Data-quality checks
+
+*Table 4. Data-quality checks.*
+
+```{r t2-5}
+sum(is.na(bikes))                               #missing values
+sum(duplicated(bikes))                          #duplicate rows
+all(bikes$cnt == bikes$casual + bikes$registered)
+
+hours_per_day <- count(bikes, dteday)
+sum(hours_per_day$n < 24)                       #days with missing hours
+arrange(hours_per_day, n) %>% head(3)           #the days missing the most
+
+sum(bikes$weathersit == 4)                      #heavy rain or snow hours
+sum(bikes$hum == 0)                             #hours with 0% humidity
+sum(bikes$windspeed == 0)                       #hours with no wind
+```
+
+There are no missing values or duplicate rows, and every hour's total equals its casual plus registered rentals. The 165 missing hours fall on 76 days. About two thirds of them are between 1 and 5 AM, so they are most likely hours in which no bikes were rented and no row was written. The rest cluster on storm days: Hurricane Sandy (October 29–30, 2012), the January 2011 snowstorm and Hurricane Irene (August 28, 2011). These are real events, so no rows are added or removed.
+
+Two values look wrong. Humidity is exactly 0% for all 22 hours of March 10, 2011, which is not physically possible, so humidity on that day should be treated as missing. Wind speed is exactly 0 in 2,180 hours (12.5%), many more than the gaps between the other wind values suggest, so some of those are probably unrecorded rather than calm. Neither variable turns out to matter much for rentals (Task 9), so both are kept but read with caution.
+
+# Task 3 – Distribution of Hourly Rentals (Lab 3)
+
+The target variable is described by its shape, center, spread and unusual values.
+
+*Table 5. Summary of rentals per hour.*
+
+```{r t3-6}
+summary(bikes$cnt)
+sd(bikes$cnt)
+IQR(bikes$cnt)
+
+#skewness: 0 means even on both sides, above 0 means a long tail to the right
+skew <- function(x) mean((x - mean(x))^3) / sd(x)^3
+skew(bikes$cnt)
+```
+
+```{r t3-7, fig.cap = "Figure 1. Distribution of rentals per hour."}
+ggplot(bikes, aes(x = cnt)) +
+  geom_histogram(bins = 40, fill = navy, color = "white") +
+  labs(title = "Most hours are quiet; a few are very busy", x = "Rentals per hour", y = "Number of hours")
+```
+
+```{r t3-8, fig.cap = "Figure 2. Boxplot of rentals per hour."}
+ggplot(bikes, aes(x = cnt, y = "")) +
+  geom_boxplot(fill = "#a5bbdd", outlier.color = red, outlier.alpha = 0.3) +
+  labs(title = "505 hours sit past the upper whisker", x = "Rentals per hour", y = NULL)
+```
+
+```{r t3-9, fig.cap = "Figure 3. Rentals per hour on a log scale."}
+ggplot(bikes, aes(x = cnt)) +
+  geom_histogram(bins = 40, fill = navy, color = "white") +
+  scale_x_log10() +
+  labs(title = "On a log scale, quiet and busy hours form two groups", x = "Rentals per hour (log scale)", y = "Number of hours")
+```
+
+**Shape.** Hourly rentals are strongly right-skewed (skewness 1.28): most hours are quiet and a smaller number of hours are very busy (Figure 1). **Center.** Because of that long right tail, the mean (189.5 rentals an hour) is well above the median (142), so the median is the better description of a typical hour. **Spread.** The middle half of hours have between 40 and 281 rentals (IQR 241), and the standard deviation is 181, almost as large as the mean. **Unusual values.** 505 hours are past the boxplot's upper whisker of 642.5 rentals (Figure 2). They are not errors: about four in five of them are morning or evening commuting hours on working days (Task 10), so they are kept.
+
+On a log scale (Figure 3) the histogram splits into two groups: overnight hours with a few to a few dozen rentals, and daytime hours with a hundred or more. The log scale only changes the picture, not the data, so every number in this report stays in rentals. For the operator, the skew matters: planning for the average hour would leave stations short in the busiest hours, which is when most riders are trying to get a bike.
+
+# Task 4 – How the Hours Are Split Across Categories (Lab 4)
+
+Before comparing groups, it helps to know how many hours fall in each one.
+
+*Table 6. Frequency and relative frequency of the categorical variables.*
+
+```{r t4-10}
+table(bikes$weather)
+round(prop.table(table(bikes$weather)) * 100, 1)
+
+round(prop.table(table(bikes$season)) * 100, 1)
+table(bikes$day_type)
+round(prop.table(table(bikes$day_type)) * 100, 1)
+```
+
+```{r t4-11, fig.cap = "Figure 4. Hours in each weather situation."}
+ggplot(bikes, aes(x = weather)) +
+  geom_bar(fill = navy) +
+  labs(title = "Two in three hours are clear", x = "Weather", y = "Number of hours")
+```
+
+Clear weather is by far the most common, at 65.7% of hours, followed by mist or clouds (26.1%); rain or snow covers only 1,422 hours (8.2%). The bars are kept in the natural order of the weather levels, from good to bad, because that order carries meaning; sorting by frequency would happen to give the same order here. The four seasons are close to equal in size (24–26% each), so differences between seasons are not caused by one season having far more data. Working days make up 68.3% of hours and weekends 28.9%, while holidays are only 500 hours (21 days), so any summary of holidays rests on few days and should be read with care.
+
+# Task 5 – Temperature and Rentals (Lab 5)
+
+Temperature is the weather measure most likely to change how many people ride. Each point below is one hour; transparency (`alpha`) shows where hours overlap, and the smooth line shows the average trend.
+
+```{r t5-12, fig.cap = "Figure 5. Temperature and rentals per hour."}
+ggplot(bikes, aes(x = temp_f, y = cnt)) +
+  geom_point(alpha = 0.05, color = navy) +
+  geom_smooth(color = red, se = FALSE) +
+  labs(title = "Warmer hours are busier", x = "Temperature (°F)", y = "Rentals per hour")
+```
+
+*Table 7. Mean rentals per hour in 10-degree temperature bands.*
+
+```{r t5-13}
+#average rentals in 10-degree bands, to put numbers on the trend
+bikes %>%
+  mutate(band = cut(temp_f, breaks = seq(10, 110, by = 10), right = FALSE)) %>%
+  group_by(band) %>%
+  summarise(mean_rentals = round(mean(cnt)), hours = n())
+```
+
+```{r t5-14, fig.cap = "Figure 6. Humidity and rentals per hour."}
+ggplot(bikes, aes(x = humidity, y = cnt)) +
+  geom_point(alpha = 0.05, color = navy) +
+  geom_smooth(color = red, se = FALSE) +
+  labs(title = "Humid hours are a little quieter", x = "Humidity (%)", y = "Rentals per hour")
+```
+
+**Direction and form.** The relationship between temperature and rentals is positive: average rentals climb from about 50 an hour below 30°F to 330 an hour in the 80s (Table 7). It is not a straight line, though. The trend is gentle in the cold, steepest from the 70s to the 80s, and levels off above 90°F (318 an hour), where very hot hours stop adding riders. The two hours above 100°F are too few to read anything into.
+
+**Spread and overplotting.** With 17,379 points the scatterplot would be a solid block without transparency; at `alpha = 0.05` the darker areas show where most hours sit. The spread also widens as it gets warmer: cold hours are almost all quiet, while warm hours range from nearly empty (nights) to very busy (rush hours). That widening is a sign that a third variable, the hour of the day, is mixed into this relationship (Tasks 8 and 10). Humidity shows a weaker, downward trend (Figure 6): the most humid hours, often rainy ones, are quieter.
+
+# Task 6 – Rentals Across Hours, Weather and Seasons (Lab 6)
+
+This task compares the distribution of rentals between groups: each hour of the day, each weather situation and each season.
+
+```{r t6-15, fig.cap = "Figure 7. Rentals by hour of the day."}
+ggplot(bikes, aes(x = factor(hr), y = cnt)) +
+  geom_boxplot(fill = "#a5bbdd", outlier.alpha = 0.15) +
+  scale_x_discrete(breaks = as.character(seq(0, 21, 3)), labels = hour_label(seq(0, 21, 3))) +
+  labs(title = "Two daily peaks, at 8 AM and 5 PM", x = "Hour of the day", y = "Rentals per hour")
+```
+
+*Table 8. Rentals per hour by weather.*
+
+```{r t6-16}
+bikes %>%
+  group_by(weather) %>%
+  summarise(mean = round(mean(cnt)), median = median(cnt), hours = n())
+```
+
+```{r t6-17, fig.cap = "Figure 8. Rentals per hour by weather."}
+ggplot(bikes, aes(x = weather, y = cnt)) +
+  geom_violin(fill = "#a5bbdd") +
+  labs(title = "Rain and snow push rentals down", x = "Weather", y = "Rentals per hour")
+```
+
+*Table 9. Rentals per hour and temperature by season.*
+
+```{r t6-18}
+bikes %>%
+  group_by(season) %>%
+  summarise(median = median(cnt), IQR = IQR(cnt), median_temp_f = round(median(temp_f), 1))
+```
+
+```{r t6-19, fig.cap = "Figure 9. Temperature by season."}
+ggplot(bikes, aes(x = season, y = temp_f)) +
+  geom_boxplot(fill = "#a5bbdd") +
+  labs(title = "The seasons have very different temperatures", x = "Season", y = "Temperature (°F)")
+```
+
+**By hour.** Rentals follow a clear daily rhythm (Figure 7). They bottom out at 3–4 AM (median 6 rentals an hour), rise sharply to a peak at 8 AM (median 385), dip through late morning, then climb to the day's highest point at 5 PM (median 475) and 6 PM (418.5) before tapering off in the evening. The midday boxes are tall because they mix working days, which are quiet at midday, with weekends, which are busiest then; Task 10 separates the two.
+
+**By weather.** Clear hours have a median of 159 rentals and rain or snow hours only 63, a 60% lower median (Table 8). The mean falls less, from 205 to 112, because some rainy rush hours are still busy. In every weather group the mean is above the median, the same right skew seen in Task 3. The violins (Figure 8) show that rain or snow mostly removes the busy hours: the Rain/snow shape is squeezed toward the bottom.
+
+**By season, and a possible confounder.** Winter's median hour has 76 rentals, less than half of Summer's 199 (Table 9). Before blaming the season, though, its temperature has to be considered: the median Winter hour is 41°F against 77°F in Summer (Figure 9), and Task 5 showed that warmer hours are busier. Much of the Winter gap may therefore come from the cold rather than from the calendar. These are observed differences, not proof of cause.
+
+# Task 7 – Season and Weather Together (Lab 7)
+
+If bad weather were more common in some seasons, part of a season's low demand would really be a weather effect. A two-way table checks this.
+
+*Table 10. Weather mix within each season (row percentages).*
+
+```{r t7-20}
+season_weather <- table(bikes$season, bikes$weather)
+addmargins(season_weather)
+
+#row percentages: the weather mix within each season
+round(prop.table(season_weather, margin = 1) * 100, 1)
+
+#column percentages: which seasons the rain or snow hours fall in
+round(prop.table(season_weather, margin = 2) * 100, 1)
+```
+
+```{r t7-21, fig.cap = "Figure 10. Weather mix in each season."}
+ggplot(bikes, aes(x = season, fill = weather)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = weather_colors) +
+  labs(title = "Summer has the most clear hours", x = "Season", y = "Share of the season's hours", fill = "Weather")
+```
+
+Raw counts would be misleading here only slightly, since the seasons are nearly equal in size, but row percentages compare the weather mix fairly. Summer stands out: 73.0% of its hours are clear and only 6.0% have rain or snow (Table 10). The other three seasons look alike, with 62–65% clear hours and about 9% rain or snow. The direction of the percentage matters: 8.9% of Fall hours have rain or snow (a row percentage), while 26.4% of all rain or snow hours fall in Fall (a column percentage), because each divides by a different total.
+
+If season and weather were unrelated, every bar in Figure 10 would have the same mix. The mix differs, mainly in Summer, so the two are associated, though weakly. For the operator, this means Summer's high rentals come partly from its fairer weather, not only from the season itself.
+
+# Task 8 – Temperature Groups and Demand Level (Lab 8)
+
+Temperature is a number, so to compare it with a category it is cut into five groups of equal width (`cut()`). Each hour is also given a demand level from its rentals: the lowest, middle and highest third of all hours.
+
+*Table 11. Demand level by temperature group (row percentages; Low = up to 70 rentals an hour, Medium = 71–225, High = over 225).*
+
+```{r t8-22}
+bikes <- bikes %>%
+  mutate(temp_group = cut(temp_f, 5),
+         demand = cut(cnt, breaks = quantile(cnt, c(0, 1/3, 2/3, 1)), include.lowest = TRUE,
+                      labels = c("Low", "Medium", "High")))
+
+quantile(bikes$cnt, c(1/3, 2/3))                #where the thirds start
+table(bikes$temp_group)
+round(prop.table(table(bikes$temp_group, bikes$demand), margin = 1) * 100, 1)
+```
+
+```{r t8-23, fig.cap = "Figure 11. Demand level within each temperature group."}
+ggplot(bikes, aes(x = temp_group, fill = demand)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = demand_colors) +
+  labs(title = "High-demand hours get more common as it warms up", x = "Temperature group (°F)", y = "Share of hours", fill = "Demand")
+```
+
+The demand levels split at 70 and 225 rentals an hour. As temperature rises, the mix shifts steadily toward high demand: only 3.9% of the coldest hours (about 19–36°F) are high-demand, against 68.0% of the hottest (about 86–102°F), and low-demand hours almost disappear in the heat (Table 11). The two end groups are the smallest (1,070 and 709 hours), so their percentages move more with a few hours than the middle groups do.
+
+One caution: unlike the daily averages, the hottest hours here do not fall off. That is because the hottest hours happen in the afternoon (half of them between 1 and 5 PM), when demand is high anyway, while more than half of the coldest hours come before 9 AM. Temperature and hour of the day are tied together, so this chart shows both effects at once.
+
+# Task 9 – Correlation (Lab 9)
+
+Correlation measures how strongly two numerical variables move together in a straight line, from −1 to +1.
+
+```{r t9-24}
+cor(bikes$temp_f, bikes$cnt)
+cor(bikes$humidity, bikes$cnt)
+
+cols <- c("temp_f", "feels_like_f", "humidity", "wind_mph", "hr", "casual", "registered", "cnt")
+cor_matrix <- round(cor(bikes[, cols]), 2)
+cor_matrix
+```
+
+```{r t9-25, fig.cap = "Figure 12. Correlation matrix of the numerical variables."}
+as.data.frame(as.table(cor_matrix)) %>%
+  ggplot(aes(x = Var1, y = Var2, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 3) +
+  scale_fill_gradient2(low = navy, mid = "white", high = red, midpoint = 0, limits = c(-1, 1)) +
+  labs(title = "Correlation matrix", x = NULL, y = NULL, fill = "r") +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1))
+```
+
+Temperature has a moderate positive correlation with rentals (r = 0.40), and humidity a weak negative one (r = −0.32), which matches the scatterplots in Task 5. Wind speed is close to zero (0.09). A value near zero does not mean there is no relationship at all, only no straight-line one. The hour of the day is the clearest example: its correlation with rentals is only 0.39, yet Task 6 showed it is the strongest pattern in the data. Its two peaks rise and fall, and a single straight-line measure cannot capture that.
+
+In the matrix the diagonal is always 1 and each value appears twice, because r(a, b) = r(b, a). Temperature and feels-like temperature are almost identical (r = 0.99), so only one of them is needed. Registered rentals correlate 0.97 with the total because they make up 81% of it. Casual riders react more to temperature (r = 0.46) than registered members (r = 0.34), which suggests they ride more by choice and less out of routine. As with every result here, correlation describes an association, not a cause: warm months also have longer days, school breaks and more visitors.
+
+# Task 10 – Hour, Day Type and Rider Type Together (Lab 10)
+
+Tasks 6 and 8 suggested that the effect of one variable depends on another. This task looks at three variables at once: rentals by hour, colored by day type, and then split by rider type with `facet_wrap()`.
+
+```{r t10-26, fig.cap = "Figure 13. Average rentals by hour for each day type."}
+hourly <- bikes %>%
+  group_by(day_type, hr) %>%
+  summarise(avg = mean(cnt), .groups = "drop")
+
+ggplot(hourly, aes(x = hr, y = avg, color = day_type)) +
+  geom_line(linewidth = 1) +
+  scale_x_continuous(breaks = seq(0, 21, 3), labels = hour_label(seq(0, 21, 3))) +
+  scale_color_manual(values = day_colors) +
+  labs(title = "Working days have two rush hours; days off have one afternoon peak",
+       x = "Hour of the day", y = "Average rentals per hour", color = "Day type")
+```
+
+*Table 12. Rentals per hour in two parts of the day, by day type.*
+
+```{r t10-27}
+#morning commute (7-9 AM) vs the middle of the day (11 AM-3 PM)
+bikes %>% filter(hr %in% 7:9) %>%
+  group_by(day_type) %>% summarise(mean = round(mean(cnt)), median = median(cnt), hours = n())
+
+bikes %>% filter(hr %in% 11:15) %>%
+  group_by(day_type) %>% summarise(mean = round(mean(cnt)), median = median(cnt), hours = n())
+```
+
+```{r t10-28, fig.cap = "Figure 14. Average rentals by hour for each rider type and day type."}
+bikes %>%
+  pivot_longer(c(casual, registered), names_to = "rider", values_to = "rentals") %>%
+  group_by(day_type, hr, rider) %>%
+  summarise(avg = mean(rentals), .groups = "drop") %>%
+  ggplot(aes(x = hr, y = avg, color = rider)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ day_type) +
+  scale_x_continuous(breaks = seq(0, 18, 6), labels = hour_label(seq(0, 18, 6))) +
+  scale_color_manual(values = c(casual = red, registered = navy)) +
+  labs(title = "Members commute; casual riders come out on days off",
+       x = "Hour of the day", y = "Average rentals per hour", color = "Rider")
+```
+
+**Day type changes the daily pattern.** On working days rentals have two sharp peaks, at 8 AM (477 an hour on average) and 5 PM (525), the shape of a commute (Figure 13). Weekends have no rush hour at all: rentals build slowly to one broad peak at 1 PM (380). Holidays look like weekends, with a smaller peak around 1 PM (299).
+
+**The effect even reverses.** Between 7 and 9 AM, working days average 336 rentals an hour against 103 on weekends, three times as many. Between 11 AM and 3 PM it flips: weekends average 363 against 188 on working days (Table 12). Whether a day is a working day therefore has no single effect on rentals; its effect depends on the hour. This is an interaction between the hour and the day type, and it is why the midday boxes in Figure 7 were so tall.
+
+**Rider type explains it.** Registered members account for the commute peaks: on working days they reach 468 rentals an hour at 5 PM, while casual riders reach only 57 (Figure 14). On weekends casual riders peak at 143 an hour at 2 PM, while members ride less and later, peaking at 245 at noon. The two groups use the system for different reasons, at different times.
+
+# Task 11 – Executive Summary
+
+**To:** Capital Bikeshare operations team  
+**From:** Adam Garantche  
+**Subject:** When and why people rent bikes, and what to do about it
+
+You asked when and why demand for bikes rises and falls, so that bikes, staff and repairs can be planned around it. This summary gives the main findings from two years of hourly rental records and what they mean for operations.
+
+## The data
+
+The analysis uses 17,379 hours of rentals in Washington, D.C. from January 2011 to December 2012, with the date, hour, type of day, weather, temperature, humidity and wind for each hour. The data is complete and consistent, with three cautions: 165 hours are missing (mostly overnight hours with no rentals, and storm days such as Hurricane Sandy), humidity is wrongly recorded as 0% on one day, and about one in eight wind readings is exactly zero, so wind should be treated with care.
+
+## What drives demand
+
+- **The time of day, and whether people are working.** On working days demand has two sharp peaks, at 8 AM (about 477 rentals an hour) and 5 PM (about 525), when people commute. Weekends have no rush hour: demand builds to one broad peak around 1 PM (about 380). The quietest time every day is 3–5 AM, with only a handful of rentals an hour.
+- **Temperature.** Warmer hours are busier: hours in the 80s average 330 rentals, against 77 in the 30s. Demand levels off above about 90°F. Part of this is timing, because warm hours tend to be afternoons, but cold hours are quiet at every time of day.
+- **Rain and snow.** A typical rainy or snowy hour has 60% fewer rentals than a typical clear hour (a median of 63 against 159).
+- **Who is riding.** 81% of rentals are by registered members, who ride to work. Casual riders are a smaller group who ride mostly on weekend afternoons, and they are more sensitive to the weather.
+
+## What this means for you
+
+- **Fill stations before the rush, not during it.** On working days, have bikes in place by 7 AM and 4 PM.
+- **Change the schedule on weekends and holidays.** There is no morning rush, so rebalancing crews can start later and focus on late morning to mid-afternoon.
+- **Do repairs and rebalancing overnight.** Between 2 and 5 AM almost no one rides, so bikes can be taken out of service with little effect on riders. Cold winter days are the best time for longer jobs.
+- **Plan around the forecast.** On cold or rainy days, expect much lower demand and move staff from rebalancing to repairs.
+- **Grow casual riding on weekends.** Casual riders already fill weekend afternoons; offers aimed at them could turn some into members.
+
+## Cautions and next steps
+
+These findings describe patterns in observational data, not proven causes: temperature, time of day, season and daylight all change together, so their separate effects cannot be fully pulled apart. The data covers one city and two years, and it has no station locations. The most useful next steps would be to add pick-up and drop-off locations, so bikes can be planned station by station, and to add more recent years to check that these patterns still hold.
+
+# References
+
+Fanaee-T, H. (2013). *Bike Sharing* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5W894

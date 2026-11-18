@@ -34,7 +34,7 @@ day$weather <- factor(day$weathersit, levels = 1:3, labels = c("Clear", "Mist/cl
 day$year <- factor(day$yr, levels = 0:1, labels = c("2011", "2012"))
 
 #temperature, humidity and wind are stored from 0 to 1, so put them back in real units (°F, % and mph)
-day$temp_f <- day$temp * 41 * 9 / 5 + 32
+day$temp_f <- (day$temp * 47 - 8) * 9 / 5 + 32  #scaled from -8 to 39 C in the readme
 day$humidity <- day$hum * 100
 day$wind_mph <- day$windspeed * 67 * 0.621371
 
